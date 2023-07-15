@@ -1,24 +1,29 @@
 import pygame
+from board import points_dict
 
 WIDTH = 1024
 HEIGHT = 768
 FPS = 30
 
-# Задаем цвета
+# Colors creation
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-# Создаем игру и окно
+# Game and game window creation
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Chess Game")
 clock = pygame.time.Clock()
 
-# Цикл игры
+pygame.draw.lines(screen, GREEN, True, (points_dict["p122"], points_dict["p123"], points_dict["p124"],
+                                        points_dict["p125"], points_dict["p126"], points_dict["p127"]), 1)
+pygame.display.update()
+
+# Game cycle
 running = True
 while running:
     clock.tick(FPS)
@@ -26,11 +31,11 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    # Обновление
-
-    # Рендеринг
-    screen.fill(BLACK)
-    # После отрисовки всего, переворачиваем экран
-    pygame.display.flip()
+    # # Update
+    #
+    # # Rendering
+    # screen.fill(BLACK)
+    # # Screen turn over
+    # pygame.display.flip()
 
 pygame.quit()
