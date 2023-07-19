@@ -1,6 +1,9 @@
 import pygame
 import numpy as np
 
+
+pygame.init()
+
 """
 THREE PLAYERS CHESS BOARD DRAFTING 
 Chess board game zone is a set of lines that cross each other in different points and form board cells as shown in 
@@ -42,7 +45,7 @@ def line_equal_split(number: int, start_point_coord: list, end_point_coord: list
 
 
 # The required length of board game zone side (regular hexagon side)
-board_side = 350
+board_side = 300
 
 """
 For points coordinates calculation features of regular hexagon and regular triangle are used:
@@ -216,10 +219,10 @@ BOARD FRAME DRAFTING.
 The width of board frame is "frame_width". As angle points (coordinates) of game zone hexagon are already calculated and 
 frame_width is assigned, it's possible to calculate angle points (coordinates) of board frame.
 
-Triangle p1-p122-tp03 is regualar. Line p1-tp02 is height, median of the triangle and "frame_width".
+Triangle p1-p122-tp03 is regular. Line p1-tp02 is height, median of the triangle and "frame_width".
 Height of regular triangle is equal to 3**0.5/2 * triangle side.  
 """
-frame_width = 40
+frame_width = 35
 
 # Adding new points to "points_dict"
 points_dict["p122"] = [points_dict["p1"][0] - frame_width / 3 ** 0.5, points_dict["p1"][1] - frame_width]
@@ -230,5 +233,246 @@ points_dict["p126"] = [points_dict["p33"][0] - frame_width / 3 ** 0.5, points_di
 points_dict["p127"] = [points_dict["p41"][0] - frame_width * 2 / 3 ** 0.5, points_dict["p41"][1]]
 
 
-class BoardCell(pygame.sprite.Sprite):
-    pass
+board = []
+
+
+class BoardCell:
+    def __init__(self, cell_name, xyz_coordinates, status, points):
+        self.name = cell_name
+        self.position = xyz_coordinates
+        self.occupied = status
+        self.points = points
+
+    def cell_draw(self, surface, color):
+        pygame.draw.polygon(surface, color, self.points)
+
+    def cell_name(self):
+        return self.name
+
+
+# Adding BoardCell objects (cells) from section a1-h4 into "board"
+board.append(BoardCell("a1", (0, -4, -4), True,
+                       (points_dict["p33"], points_dict["p34"], points_dict["p110"], points_dict["p32"])))
+board.append(BoardCell("a2", (0, -3, -4), True,
+                       (points_dict["p34"], points_dict["p35"], points_dict["p107"], points_dict["p110"])))
+board.append(BoardCell("a3", (0, -2, -4), False,
+                       (points_dict["p35"], points_dict["p36"], points_dict["p104"], points_dict["p107"])))
+board.append(BoardCell("a4", (0, -1, -4), False,
+                       (points_dict["p36"], points_dict["p37"], points_dict["p61"], points_dict["p104"])))
+
+board.append(BoardCell("b4", (0, -1, -3), False,
+                       (points_dict["p105"], points_dict["p104"], points_dict["p61"], points_dict["p60"])))
+board.append(BoardCell("b3", (0, -2, -3), False,
+                       (points_dict["p108"], points_dict["p107"], points_dict["p104"], points_dict["p105"])))
+board.append(BoardCell("b2", (0, -3, -3), True,
+                       (points_dict["p111"], points_dict["p110"], points_dict["p107"], points_dict["p108"])))
+board.append(BoardCell("b1", (0, -4, -3), True,
+                       (points_dict["p31"], points_dict["p32"], points_dict["p110"], points_dict["p111"])))
+
+board.append(BoardCell("c1", (0, -4, -2), True,
+                       (points_dict["p30"], points_dict["p31"], points_dict["p111"], points_dict["p112"])))
+board.append(BoardCell("c2", (0, -3, -2), True,
+                       (points_dict["p112"], points_dict["p111"], points_dict["p108"], points_dict["p109"])))
+board.append(BoardCell("c3", (0, -2, -2), False,
+                       (points_dict["p109"], points_dict["p108"], points_dict["p105"], points_dict["p106"])))
+board.append(BoardCell("c4", (0, -1, -2), False,
+                       (points_dict["p106"], points_dict["p105"], points_dict["p60"], points_dict["p59"])))
+
+board.append(BoardCell("d4", (0, -1, -1), False,
+                       (points_dict["p52"], points_dict["p59"], points_dict["p106"], points_dict["p53"])))
+board.append(BoardCell("d3", (0, -2, -1), False,
+                       (points_dict["p53"], points_dict["p106"], points_dict["p109"], points_dict["p54"])))
+board.append(BoardCell("d2", (0, -3, -1), True,
+                       (points_dict["p54"], points_dict["p109"], points_dict["p112"], points_dict["p55"])))
+board.append(BoardCell("d1", (0, -4, -1), True,
+                       (points_dict["p55"], points_dict["p112"], points_dict["p30"], points_dict["p29"])))
+
+board.append(BoardCell("e1", (1, -4, 0), True,
+                       (points_dict["p28"], points_dict["p29"], points_dict["p55"], points_dict["p101"])))
+board.append(BoardCell("e2", (1, -3, 0), True,
+                       (points_dict["p101"], points_dict["p55"], points_dict["p54"], points_dict["p98"])))
+board.append(BoardCell("e3", (1, -2, 0), False,
+                       (points_dict["p98"], points_dict["p54"], points_dict["p53"], points_dict["p95"])))
+board.append(BoardCell("e4", (1, -1, 0), False,
+                       (points_dict["p95"], points_dict["p53"], points_dict["p52"], points_dict["p64"])))
+
+board.append(BoardCell("f4", (2, -1, 0), False,
+                       (points_dict["p63"], points_dict["p64"], points_dict["p95"], points_dict["p96"])))
+board.append(BoardCell("f3", (2, -2, 0), False,
+                       (points_dict["p96"], points_dict["p95"], points_dict["p98"], points_dict["p99"])))
+board.append(BoardCell("f2", (2, -3, 0), True,
+                       (points_dict["p99"], points_dict["p98"], points_dict["p101"], points_dict["p102"])))
+board.append(BoardCell("f1", (2, -4, 0), True,
+                       (points_dict["p102"], points_dict["p101"], points_dict["p28"], points_dict["p27"])))
+
+board.append(BoardCell("g1", (3, -4, 0), True,
+                       (points_dict["p26"], points_dict["p27"], points_dict["p102"], points_dict["p103"])))
+board.append(BoardCell("g2", (3, -3, 0), True,
+                       (points_dict["p103"], points_dict["p102"], points_dict["p99"], points_dict["p100"])))
+board.append(BoardCell("g3", (3, -2, 0), False,
+                       (points_dict["p100"], points_dict["p99"], points_dict["p96"], points_dict["p97"])))
+board.append(BoardCell("g4", (3, -1, 0), False,
+                       (points_dict["p97"], points_dict["p96"], points_dict["p63"], points_dict["p62"])))
+
+board.append(BoardCell("h4", (4, -1, 0), False,
+                       (points_dict["p21"], points_dict["p62"], points_dict["p97"], points_dict["p22"])))
+board.append(BoardCell("h3", (4, -2, 0), False,
+                       (points_dict["p22"], points_dict["p97"], points_dict["p100"], points_dict["p23"])))
+board.append(BoardCell("h2", (4, -3, 0), True,
+                       (points_dict["p23"], points_dict["p100"], points_dict["p103"], points_dict["p24"])))
+board.append(BoardCell("h1", (4, -4, 0), True,
+                       (points_dict["p24"], points_dict["p103"], points_dict["p26"], points_dict["p25"])))
+
+
+# Adding BoardCell objects (cells) from section l8-a5 into "board"
+board.append(BoardCell("l8", (-4, 4, 0), True,
+                       (points_dict["p1"], points_dict["p2"], points_dict["p68"], points_dict["p48"])))
+board.append(BoardCell("l7", (-3, 4, 0), True,
+                       (points_dict["p2"], points_dict["p3"], points_dict["p69"], points_dict["p68"])))
+board.append(BoardCell("l6", (-2, 4, 0), False,
+                       (points_dict["p3"], points_dict["p4"], points_dict["p70"], points_dict["p69"])))
+board.append(BoardCell("l5", (-1, 4, 0), False,
+                       (points_dict["p4"], points_dict["p5"], points_dict["p49"], points_dict["p70"])))
+
+board.append(BoardCell("k5", (-1, 3, 0), False,
+                       (points_dict["p49"], points_dict["p70"], points_dict["p73"], points_dict["p50"])))
+board.append(BoardCell("k6", (-2, 3, 0), False,
+                       (points_dict["p70"], points_dict["p69"], points_dict["p72"], points_dict["p73"])))
+board.append(BoardCell("k7", (-3, 3, 0), True,
+                       (points_dict["p69"], points_dict["p68"], points_dict["p71"], points_dict["p72"])))
+board.append(BoardCell("k8", (-4, 3, 0), True,
+                       (points_dict["p68"], points_dict["p48"], points_dict["p47"], points_dict["p71"])))
+
+board.append(BoardCell("j8", (-4, 2, 0), True,
+                       (points_dict["p47"], points_dict["p71"], points_dict["p74"], points_dict["p46"])))
+board.append(BoardCell("j7", (-3, 2, 0), True,
+                       (points_dict["p71"], points_dict["p72"], points_dict["p75"], points_dict["p74"])))
+board.append(BoardCell("j6", (-2, 2, 0), False,
+                       (points_dict["p72"], points_dict["p73"], points_dict["p76"], points_dict["p75"])))
+board.append(BoardCell("j5", (-1, 2, 0), False,
+                       (points_dict["p73"], points_dict["p50"], points_dict["p51"], points_dict["p76"])))
+
+board.append(BoardCell("i5", (-1, 1, 0), False,
+                       (points_dict["p51"], points_dict["p76"], points_dict["p65"], points_dict["p52"])))
+board.append(BoardCell("i6", (-2, 1, 0), False,
+                       (points_dict["p76"], points_dict["p75"], points_dict["p66"], points_dict["p65"])))
+board.append(BoardCell("i7", (-3, 1, 0), True,
+                       (points_dict["p75"], points_dict["p74"], points_dict["p67"], points_dict["p66"])))
+board.append(BoardCell("i8", (-4, 1, 0), True,
+                       (points_dict["p74"], points_dict["p46"], points_dict["p45"], points_dict["p67"])))
+
+board.append(BoardCell("d8", (-4, 0, -1), True,
+                       (points_dict["p45"], points_dict["p67"], points_dict["p113"], points_dict["p44"])))
+board.append(BoardCell("d7", (-3, 0, -1), True,
+                       (points_dict["p67"], points_dict["p66"], points_dict["p114"], points_dict["p113"])))
+board.append(BoardCell("d6", (-2, 0, -1), False,
+                       (points_dict["p66"], points_dict["p65"], points_dict["p115"], points_dict["p114"])))
+board.append(BoardCell("d5", (-1, 0, -1), False,
+                       (points_dict["p65"], points_dict["p52"], points_dict["p59"], points_dict["p115"])))
+
+board.append(BoardCell("c5", (-1, 0, -2), False,
+                       (points_dict["p59"], points_dict["p115"], points_dict["p118"], points_dict["p60"])))
+board.append(BoardCell("c6", (-2, 0, -2), False,
+                       (points_dict["p115"], points_dict["p114"], points_dict["p117"], points_dict["p118"])))
+board.append(BoardCell("c7", (-3, 0, -2), True,
+                       (points_dict["p114"], points_dict["p113"], points_dict["p116"], points_dict["p117"])))
+board.append(BoardCell("c8", (-4, 0, -2), True,
+                       (points_dict["p113"], points_dict["p44"], points_dict["p43"], points_dict["p116"])))
+
+board.append(BoardCell("b8", (-4, 0, -3), True,
+                       (points_dict["p43"], points_dict["p116"], points_dict["p119"], points_dict["p42"])))
+board.append(BoardCell("b7", (-3, 0, -3), True,
+                       (points_dict["p116"], points_dict["p117"], points_dict["p120"], points_dict["p119"])))
+board.append(BoardCell("b6", (-2, 0, -3), False,
+                       (points_dict["p117"], points_dict["p118"], points_dict["p121"], points_dict["p120"])))
+board.append(BoardCell("b5", (-1, 0, -3), False,
+                       (points_dict["p118"], points_dict["p60"], points_dict["p61"], points_dict["p121"])))
+
+board.append(BoardCell("a5", (-1, 0, -4), False,
+                       (points_dict["p61"], points_dict["p121"], points_dict["p38"], points_dict["p37"])))
+board.append(BoardCell("a6", (-2, 0, -4), False,
+                       (points_dict["p121"], points_dict["p120"], points_dict["p39"], points_dict["p38"])))
+board.append(BoardCell("a7", (-3, 0, -4), True,
+                       (points_dict["p120"], points_dict["p119"], points_dict["p40"], points_dict["p39"])))
+board.append(BoardCell("a8", (-4, 0, -4), True,
+                       (points_dict["p119"], points_dict["p42"], points_dict["p41"], points_dict["p40"])))
+
+
+# Adding BoardCell objects (cells) from section h12-l9 into "board"
+board.append(BoardCell("h12", (4, 0, 4), True,
+                       (points_dict["p17"], points_dict["p18"], points_dict["p94"], points_dict["p16"])))
+board.append(BoardCell("h11", (4, 0, 3), True,
+                       (points_dict["p18"], points_dict["p19"], points_dict["p93"], points_dict["p94"])))
+board.append(BoardCell("h10", (4, 0, 2), False,
+                       (points_dict["p19"], points_dict["p20"], points_dict["p92"], points_dict["p93"])))
+board.append(BoardCell("h9", (4, 0, 1), False,
+                       (points_dict["p20"], points_dict["p21"], points_dict["p62"], points_dict["p92"])))
+
+board.append(BoardCell("g9", (3, 0, 1), False,
+                       (points_dict["p92"], points_dict["p62"], points_dict["p63"], points_dict["p89"])))
+board.append(BoardCell("g10", (3, 0, 2), False,
+                       (points_dict["p93"], points_dict["p92"], points_dict["p89"], points_dict["p90"])))
+board.append(BoardCell("g11", (3, 0, 3), True,
+                       (points_dict["p94"], points_dict["p93"], points_dict["p90"], points_dict["p91"])))
+board.append(BoardCell("g12", (3, 0, 4), True,
+                       (points_dict["p16"], points_dict["p94"], points_dict["p91"], points_dict["p15"])))
+
+board.append(BoardCell("f12", (2, 0, 4), True,
+                       (points_dict["p15"], points_dict["p91"], points_dict["p88"], points_dict["p14"])))
+board.append(BoardCell("f11", (2, 0, 3), True,
+                       (points_dict["p91"], points_dict["p90"], points_dict["p87"], points_dict["p88"])))
+board.append(BoardCell("f10", (2, 0, 2), False,
+                       (points_dict["p90"], points_dict["p89"], points_dict["p86"], points_dict["p87"])))
+board.append(BoardCell("f9", (2, 0, 1), False,
+                       (points_dict["p89"], points_dict["p63"], points_dict["p64"], points_dict["p86"])))
+
+board.append(BoardCell("e9", (1, 0, 1), False,
+                       (points_dict["p86"], points_dict["p64"], points_dict["p52"], points_dict["p58"])))
+board.append(BoardCell("e10", (1, 0, 2), False,
+                       (points_dict["p87"], points_dict["p86"], points_dict["p58"], points_dict["p57"])))
+board.append(BoardCell("e11", (1, 0, 3), True,
+                       (points_dict["p88"], points_dict["p87"], points_dict["p57"], points_dict["p56"])))
+board.append(BoardCell("e12", (1, 0, 4), True,
+                       (points_dict["p14"], points_dict["p88"], points_dict["p56"], points_dict["p13"])))
+
+board.append(BoardCell("i12", (0, 1, 4), True,
+                       (points_dict["p13"], points_dict["p56"], points_dict["p85"], points_dict["p12"])))
+board.append(BoardCell("i11", (0, 1, 3), True,
+                       (points_dict["p56"], points_dict["p57"], points_dict["p84"], points_dict["p85"])))
+board.append(BoardCell("i10", (0, 1, 2), False,
+                       (points_dict["p57"], points_dict["p58"], points_dict["p83"], points_dict["p84"])))
+board.append(BoardCell("i9", (0, 1, 1), False,
+                       (points_dict["p58"], points_dict["p52"], points_dict["p51"], points_dict["p83"])))
+
+board.append(BoardCell("j9", (0, 2, 1), False,
+                       (points_dict["p83"], points_dict["p51"], points_dict["p50"], points_dict["p80"])))
+board.append(BoardCell("j10", (0, 2, 2), False,
+                       (points_dict["p84"], points_dict["p83"], points_dict["p80"], points_dict["p81"])))
+board.append(BoardCell("j11", (0, 2, 3), True,
+                       (points_dict["p85"], points_dict["p84"], points_dict["p81"], points_dict["p82"])))
+board.append(BoardCell("j12", (0, 2, 4), True,
+                       (points_dict["p12"], points_dict["p85"], points_dict["p82"], points_dict["p11"])))
+
+board.append(BoardCell("k12", (0, 3, 4), True,
+                       (points_dict["p11"], points_dict["p82"], points_dict["p79"], points_dict["p10"])))
+board.append(BoardCell("k11", (0, 3, 3), True,
+                       (points_dict["p82"], points_dict["p81"], points_dict["p78"], points_dict["p79"])))
+board.append(BoardCell("k10", (0, 3, 2), False,
+                       (points_dict["p81"], points_dict["p80"], points_dict["p77"], points_dict["p78"])))
+board.append(BoardCell("i9", (0, 3, 1), False,
+                       (points_dict["p80"], points_dict["p50"], points_dict["p49"], points_dict["p77"])))
+
+board.append(BoardCell("l9", (0, 4, 1), False,
+                       (points_dict["p77"], points_dict["p49"], points_dict["p5"], points_dict["p6"])))
+board.append(BoardCell("l10", (0, 4, 2), False,
+                       (points_dict["p78"], points_dict["p77"], points_dict["p6"], points_dict["p7"])))
+board.append(BoardCell("l11", (0, 4, 3), True,
+                       (points_dict["p79"], points_dict["p78"], points_dict["p7"], points_dict["p8"])))
+board.append(BoardCell("l12", (0, 4, 4), True,
+                       (points_dict["p10"], points_dict["p79"], points_dict["p8"], points_dict["p9"])))
+
+
+# Board frame letters and digits
+letters = "ABCDEFDHIJKL"
+digits = range(1, 13)
+font_to_be_used = pygame.font.match_font('arial', bold=True)
