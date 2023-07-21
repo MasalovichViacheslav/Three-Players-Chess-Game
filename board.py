@@ -6,9 +6,9 @@ pygame.init()
 
 """
 THREE PLAYERS CHESS BOARD DRAFTING 
-Chess board game zone is a set of lines that cross each other in different points and form board cells as shown in 
-image "Chess board draft.png" in "supporting materials" directory. Such points and their coordinates are stored in
-dictionary "points_dict". Initial point "p1" has coordinates [x, y].
+Chess board is a set of lines that cross each other in different points and form board cells as shown in image "Chess 
+board draft.png" in "supporting materials" directory. Such points and their coordinates are stored in dictionary 
+"points_dict". Initial point "p1" has coordinates [x, y].
 """
 points_dict = {}
 x1 = 300
@@ -18,11 +18,10 @@ points_dict["p1"] = [x1, y1]
 
 # The function calculates coordinates of points that divide a line into 8 equal lines
 def line_equal_split(number: int, start_point_coord: list, end_point_coord: list) -> dict:
-    global points_dict
     """
-    Creation of points_dict copy. If to iterate a dictionary and add new key-value in this dictionary, an error occurs -
-    RuntimeError: dictionary changed size during iteration. That is why in the FOR LOOP below dictionary copy is 
-    iterated and original dictionary is updated.
+    Creating "points_dict" copy. If to iterate a dictionary and add new key-value in this dictionary during iteration,
+    an error occurs - RuntimeError: dictionary changed size during iteration. That is why in the FOR LOOP below
+    dictionary copy is iterated and original dictionary is updated.
     """
     temp_dict = points_dict.copy()
     coord_repeat = 0
@@ -30,8 +29,8 @@ def line_equal_split(number: int, start_point_coord: list, end_point_coord: list
         x = start_point_coord[0] + (end_point_coord[0] - start_point_coord[0]) / 8 * i
         y = start_point_coord[1] + (end_point_coord[1] - start_point_coord[1]) / 8 * i
         """
-        Checking whether there is a point with [x, y] coordinates in points_dict or not. No need in the points with 
-        the same coordinates but different names in the dictionary.
+        Checking whether there is a point with [x, y] coordinates in points_dict or not. No need in points with the same
+         coordinates but different names in the dictionary (in particular, the talk is about point "p52").
         """
         for key in temp_dict:
             if round(temp_dict[key][0], 5) == round(x, 5) and round(temp_dict[key][1], 5) == round(y, 5):
@@ -45,10 +44,10 @@ def line_equal_split(number: int, start_point_coord: list, end_point_coord: list
 
 
 # The required length of board game zone side (regular hexagon side)
-board_side = 300
+board_side = 350
 
 """
-For points coordinates calculation features of regular hexagon and regular triangle are used:
+For points coordinates calculation the following features of regular hexagon and regular triangle are used:
 - regular hexagon is consist of 6 regular equal to each other triangles;
 - height of regular triangle is also median of this triangle;
 - height of regular triangle is equal to 3**0.5/2 * triangle side
@@ -473,6 +472,81 @@ board.append(BoardCell("l12", (0, 4, 4), True,
 
 
 # Board frame letters and digits
-letters = "ABCDEFDHIJKL"
-digits = range(1, 13)
-font_to_be_used = pygame.font.match_font('arial', bold=True)
+font_size = 16
+path_to_font = pygame.font.match_font('arial', bold=True)
+font_to_be_used = pygame.font.Font(path_to_font, font_size)
+
+
+def draw_symbol(symbols: tuple, rotation: int, color: tuple, surface: object, coords: list):
+    for index in range(len(symbols)):
+        symbol_surface = font_to_be_used.render(symbols[index], True, color)
+        symbol_surface = pygame.transform.rotate(symbol_surface, rotation)
+        symbol_rect = symbol_surface.get_rect()
+        symbol_rect.center = coords[index]
+        surface.blit(symbol_surface, symbol_rect)
+
+
+'''
+Function rect_center_coords calculates coordinates of a point that is a center of corresponding symbol rectangle 
+(symbol_rect.center) and end them into the lsit. Calculation is made based on already calculated coordinates of two 
+nearby points. Below the logic of coordinates calculation is shown for symbol "L" nearby points "p9" and "p10" (check 
+"Chess board draft.png" in "supporting materials" directory. For other symbols to be drawn the logic similar.
+
+
+Calculation of point "TP07" coordinates is made based on geometric features:
+
+1) lines p8-p9 and TP04-TP06 are parallel, angel p8-p9-p10 is regular hexagon inner angle and is equal to 120 degrees,
+accordingly angle p10-TP05-TP04 is equal to 60 degrees, as well as angle p10-TP05-TP06;
+
+2) line TP07-TP05 is  equal to a half of the board frame width (frame_width), also line TP07-TP05 is perpendicular and 
+median of line p9-10; as angle p10-TP05-TP06 is equal to 60 degrees and andle TP07-TP05-p10 is equal to 90 degrees,
+accordingly angle TP07-TP05-TP06 is equal to 30 degrees;
+
+3) line TP07-TP06 is perpendicular to the line TP06-TP05, accordingly triangle TP07-TP06-TP05 is right triangle with  
+angle TP07-TP05-TP06 equal to 30 degrees;
+
+4) as line TP07-TP05 is median of line p9-10, point TP05 divides into two equal parts and it has the following 
+coordinates:
+X(tp05) = X(p9) + (X(p10) - X(p9)) / 2
+Y(tp05) = Y(p9) + (Y(p10) - Y(p9)) / 2
+
+5) coordinates of TP07 are equal to:
+X(tp07) = X(tp05) + TP05-TP06 line length
+Y(tp07) = Y(tp05) + TP07-TP06 line length
+
+6) TP07-TP05 is hypotenuse of triangle TP07-TP06-TP05, angle TP07-TP05-TP06 is equal to 30 degrees, accordingly:
+TP05-TP06 = TP07-TP05 * cos 30 (cos 30 is equal to 3**0.5/2)
+TP07-TP06 = TP07-TP05 * sin 30 (sin 30 is equal to 0.5)     
+'''
+
+
+def rect_center_coords(rects_center_coords_lst: list, points_coords: list) -> list:
+    for index in range(len(points_coords) - 1):
+        if index < 8:
+            x = points_coords[index][0] + (points_coords[index + 1][0] - points_coords[index][0]) / 2
+            y = points_coords[index][1] - frame_width / 2
+        elif 8 <= index < 16:
+            x = points_coords[index][0] + (
+                        points_coords[index + 1][0] - points_coords[index][0]) / 2 + frame_width / 2 * 3 ** 0.5 / 2
+            y = points_coords[index][1] + (
+                        points_coords[index + 1][1] - points_coords[index][1]) / 2 - frame_width / 2 * 0.5
+        elif 16 <= index < 24:
+            x = points_coords[index][0] + (
+                        points_coords[index + 1][0] - points_coords[index][0]) / 2 + frame_width / 2 * 3 ** 0.5 / 2
+            y = points_coords[index][1] + (
+                        points_coords[index + 1][1] - points_coords[index][1]) / 2 + frame_width / 2 * 0.5
+        elif 24 <= index < 32:
+            x = points_coords[index][0] + (points_coords[index + 1][0] - points_coords[index][0]) / 2
+            y = points_coords[index][1] + frame_width / 2
+        elif 32 <= index < 40:
+            x = points_coords[index][0] + (
+                        points_coords[index + 1][0] - points_coords[index][0]) / 2 - frame_width / 2 * 3 ** 0.5 / 2
+            y = points_coords[index][1] + (
+                        points_coords[index + 1][1] - points_coords[index][1]) / 2 + frame_width / 2 * 0.5
+        else:
+            x = points_coords[index][0] + (
+                        points_coords[index + 1][0] - points_coords[index][0]) / 2 - frame_width / 2 * 3 ** 0.5 / 2
+            y = points_coords[index][1] + (
+                        points_coords[index + 1][1] - points_coords[index][1]) / 2 - frame_width / 2 * 0.5
+        rects_center_coords_lst.append([x, y])
+    return rects_center_coords_lst
