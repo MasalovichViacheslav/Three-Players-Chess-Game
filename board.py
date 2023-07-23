@@ -113,19 +113,55 @@ X / (Xe - Xs) - Xs/ (Xe - Xs) = Y / (Ye - Ys) - Ys / (Ye - Ys)
 X / (Xe - Xs) - Y / (Ye - Ys) = Xs/ (Xe - Xs) - Ys / (Ye - Ys)
 X * (1 / (Xe - Xs)) + Y * ((-1) / (Ye - Ys)) = Xs/ (Xe - Xs) - Ys / (Ye - Ys)  - such form is equal to the leaner
 equations shown in the example above.
+
+
+
+If any of two lines has equal X or Y values of start and end points, then specified above method will raise 
+ZeroDivisionError. In such case cross point coordinates shall be calculated in the following way:
+
+if one line is parallel to Y-axis, it means that all points on a line have the same value of X coordinate, including 
+point of cross with another line, accordingly cross point will have the following coordinates:
+X = Xvalue
+Y = (Xvalue - Xs)(Ye - Ys)/(Xe - Xs) + Ys,
+where [Xs, Ys] and [Xe, Ye] are coordinates of two points of another line
+
+if one line is parallel to X-axis, it means that all points on a line have the same value of Y coordinate, including 
+point of cross with another line, accordingly cross point will have coordinates:
+Y = Yvalue
+X = (Yvalue - Ys)(Xe - Xs) / (Ye - Ys) + Xs,
+where [Xs, Ys] and [Xe, Ye] are coordinates of two points of another line
+
+Function "lines_cross_point" firstly check whether any of two line has the same X or Y coordinates or not, if yes, it 
+calculates cross point coordinates in accordance with logic specified above, if no, use "numpy.linalg.solve" to
+calculate coordinates of cross point.  
 """
 
 
 def lines_cross_point(line1_start: list, line1_end: list, line2_start: list, line2_end: list) -> list:
-    a = np.array(
-        [[1 / (line1_end[0] - line1_start[0]), (-1) / (line1_end[1] - line1_start[1])],
-         [1 / (line2_end[0] - line2_start[0]), (-1) / (line2_end[1] - line2_start[1])]]
-    )
-    b = np.array(
+    if line1_start[0] == line1_end[0]:
+        x = line1_start[0]
+        y = (x - line2_start[0]) * (line2_end[1] - line2_start[1]) / (line2_end[0] - line2_start[0]) + line2_start[1]
+    elif line1_start[1] == line1_end[1]:
+        y = line1_start[1]
+        x = (y - line2_start[1]) * (line2_end[0] - line2_start[0]) / (line2_end[1] - line2_start[1]) + line2_start[0]
+    elif line2_start[0] == line2_end[0]:
+        x = line2_start[0]
+        y = (x - line1_start[0]) * (line1_end[1] - line1_start[1]) / (line1_end[0] - line1_start[0]) + line1_start[1]
+    elif line2_start[1] == line2_end[1]:
+        y = line2_start[1]
+        x = (y - line1_start[1]) * (line1_end[0] - line1_start[0]) / (line1_end[1] - line1_start[1]) + line1_start[0]
+    else:
+        a = np.array(
+            [[1 / (line1_end[0] - line1_start[0]), (-1) / (line1_end[1] - line1_start[1])],
+             [1 / (line2_end[0] - line2_start[0]), (-1) / (line2_end[1] - line2_start[1])]]
+        )
+        b = np.array(
         [[line1_start[0] / (line1_end[0] - line1_start[0]) - line1_start[1] / (line1_end[1] - line1_start[1])],
          [line2_start[0] / (line2_end[0] - line2_start[0]) - line2_start[1] / (line2_end[1] - line2_start[1])]]
-    )
-    return [float(np.linalg.solve(a, b)[0]), float(np.linalg.solve(a, b)[1])]
+        )
+        x = float(np.linalg.solve(a, b)[0])
+        y = float(np.linalg.solve(a, b)[1])
+    return [x, y]
 
 
 # Calculation of points coordinates from point "p68" up to point "p121"
@@ -223,7 +259,7 @@ Height of regular triangle is equal to 3**0.5/2 * triangle side.
 """
 frame_width = 35
 
-# Adding new points to "points_dict"
+# Adding board frame angle points to "points_dict"
 points_dict["p122"] = [points_dict["p1"][0] - frame_width / 3 ** 0.5, points_dict["p1"][1] - frame_width]
 points_dict["p123"] = [points_dict["p9"][0] + frame_width / 3 ** 0.5, points_dict["p9"][1] - frame_width]
 points_dict["p124"] = [points_dict["p17"][0] + frame_width * 2 / 3 ** 0.5, points_dict["p17"][1]]
@@ -236,17 +272,14 @@ board = []
 
 
 class BoardCell:
-    def __init__(self, cell_name, xyz_coordinates, status, points):
+    def __init__(self, cell_name: str, xyz_coordinates: tuple, status: bool, points: tuple):
         self.name = cell_name
         self.position = xyz_coordinates
         self.occupied = status
         self.points = points
 
-    def cell_draw(self, surface, color):
+    def cell_draw(self, surface, color: tuple):
         pygame.draw.polygon(surface, color, self.points)
-
-    def cell_name(self):
-        return self.name
 
 
 # Adding BoardCell objects (cells) from section a1-h4 into "board"

@@ -1,8 +1,9 @@
 import pygame
 from board import points_dict, board, rect_center_coords, draw_symbol
 from colors import GOLD_LIGHT, GOLD_VERY_DARK, BLACK
+from pieces import all_pieces, all_pieces_lst
 
-WIDTH = 1300
+WIDTH = 1200
 HEIGHT = 800
 FPS = 30
 
@@ -10,16 +11,16 @@ FPS = 30
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-board_background = pygame.Surface((WIDTH - 300, HEIGHT - 100))
-board_background_rect = board_background.get_rect()
 pygame.display.set_caption("Chess Game")
 clock = pygame.time.Clock()
 
-# Board drawing
+# BOARD DRAWING
+board_background = pygame.Surface((WIDTH - 300, HEIGHT - 100))
+board_background_rect = board_background.get_rect()
+
 # Board frame drawing
 pygame.draw.lines(board_background, GOLD_LIGHT, True, (points_dict["p122"], points_dict["p123"], points_dict["p124"],
                                                        points_dict["p125"], points_dict["p126"], points_dict["p127"]))
-
 
 # Board cells drawing
 for index in range(len(board)):
@@ -27,7 +28,6 @@ for index in range(len(board)):
         board[index].cell_draw(board_background, GOLD_VERY_DARK)
     else:
         board[index].cell_draw(board_background, GOLD_LIGHT)
-
 
 # Letters and digits drawing on the board frame
 letters_digits = (
@@ -39,6 +39,11 @@ nearby_points_coords_lst += [points_dict["p1"]]
 empty_list = []
 center_points_coords = rect_center_coords(empty_list, nearby_points_coords_lst)
 draw_symbol(letters_digits, 0, GOLD_LIGHT, board_background, center_points_coords)
+
+
+# PIECES DRAWING ON START POSITIONS
+for piece in all_pieces_lst:
+    piece.piece_drawing(board_background)
 
 
 # Game cycle

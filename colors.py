@@ -30,3 +30,6 @@ BLUE_VERY_DARK = (31, 78, 121)
 GOLD_LIGHT = (251, 239, 220)
 GOLD_DARK = (219, 142, 20)
 GOLD_VERY_DARK = (146, 95, 13)
+
+# set_colorkey color for pieces
+SPECIAL_WHITE = (254, 255, 255)
