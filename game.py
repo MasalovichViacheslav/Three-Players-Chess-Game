@@ -39,7 +39,7 @@ draw_symbol(letters_digits, 0, GOLD_LIGHT, board_background, center_points_coord
 # GAME CYCLE
 running = True
 selected_piece_list = []
-# piece_move = False
+cells_for_move = []
 while running:
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -48,10 +48,8 @@ while running:
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             for piece in all_pieces_lst:
-                print(piece.name, piece.rect.collidepoint(event.pos), piece.is_selected, len(selected_piece_list))
                 if piece.rect.collidepoint(event.pos) and piece.is_selected is False and len(selected_piece_list) == 0:
                     piece.is_selected = True
-                    {print(f'name - {piece.name}, position - {piece.position}')}
                     cells_for_move = piece.highlight_cells()
                     selected_piece_list.append(piece)
                     break
@@ -62,18 +60,17 @@ while running:
                     selected_piece_list.clear()
                     break
 
-            if len(cells_for_move) != 0:
-                for cell in cells_for_move:
-                    if cell.rect.collidepoint(event.pos):
-                        selected_piece_list[0].unhighlight_cells()
-                        selected_piece_list[0].position = cell.position
-                        selected_piece_list[0].is_selected = False
-                        selected_piece_list.clear()
-                        print(f'in the looop after clear {len(selected_piece_list)}')
-
-
-
-                        
+            for cell in cells_for_move[:-1]:
+                if cell.rect.collidepoint(event.pos) and len(cells_for_move) != 1:
+                    for piece in all_pieces_lst:
+                        if piece.position == cell.position:
+                            all_pieces_lst.remove(piece)
+                    selected_piece_list[0].unhighlight_cells()
+                    selected_piece_list[0].position = cell.position
+                    cell.occupied = True
+                    selected_piece_list[0].is_selected = False
+                    selected_piece_list.clear()
+                    cells_for_move[-1].occupied = False
 
 
         elif event.type == pygame.MOUSEBUTTONUP:

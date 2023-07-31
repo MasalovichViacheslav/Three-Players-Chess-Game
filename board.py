@@ -282,12 +282,20 @@ class BoardCell:
         self.initial_color = color
         self.current_color = self.initial_color
 
-
     def cell_draw(self, surface):
-        self.rect = pygame.draw.polygon(surface, self.current_color, self.points)
+        self.rect = pygame.draw.polygon(surface, self.current_color, self.points).scale_by(0.4)
+        # print(type(self.rect))
+        # self.rect = self.rect.scale_by(0.5)
+        # print(type(self.rect))
+
 
 
 board = []
+
+"""
+Each cell has coordinates in tree-dimension system. For details of assigning coordinates for each cell please check 
+"System of coordinates on the board.png" file in "supporting materials" directory.
+"""
 
 # Adding BoardCell objects (cells) from section a1-h4 into "board"
 board.append(BoardCell("a1", [0, -4, -4], True,
