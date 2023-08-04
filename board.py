@@ -535,7 +535,7 @@ board.append(BoardCell("k11", [0, 3, 3], True,
                        (points_dict["p82"], points_dict["p81"], points_dict["p78"], points_dict["p79"]), light_color))
 board.append(BoardCell("k10", [0, 3, 2], False,
                        (points_dict["p81"], points_dict["p80"], points_dict["p77"], points_dict["p78"]), dark_color))
-board.append(BoardCell("i9", [0, 3, 1], False,
+board.append(BoardCell("k9", [0, 3, 1], False,
                        (points_dict["p80"], points_dict["p50"], points_dict["p49"], points_dict["p77"]), light_color))
 
 

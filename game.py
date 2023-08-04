@@ -61,7 +61,7 @@ while running:
                     break
 
             for cell in cells_for_move[:-1]:
-                if cell.rect.collidepoint(event.pos) and len(cells_for_move) != 1:
+                if cell.rect.collidepoint(event.pos):
                     for piece in all_pieces_lst:
                         if piece.position == cell.position:
                             all_pieces_lst.remove(piece)
@@ -71,6 +71,7 @@ while running:
                     selected_piece_list[0].is_selected = False
                     selected_piece_list.clear()
                     cells_for_move[-1].occupied = False
+                    cells_for_move.clear()
 
 
         elif event.type == pygame.MOUSEBUTTONUP:

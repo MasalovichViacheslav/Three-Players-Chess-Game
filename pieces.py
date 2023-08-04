@@ -77,9 +77,6 @@ class Piece(pygame.sprite.Sprite):
             cell.current_color = cell.initial_color
         return []
 
-    def move_piece(self):
-        cells_for_moves = self.possible_moves()
-
 
 class Bishop(Piece):
     def show_possible_moves(self):
@@ -97,8 +94,94 @@ class Knight(Piece):
 
 
 class Rook(Piece):
-    def show_possible_moves(self):
-        pass
+    def possible_moves(self):
+        super().possible_moves()
+        possible_move_cells_list = []
+        all_moves_cells_list = []
+
+        """
+        The function below checks cells in corresponding list of cells: whether a cell is occupied by another piece or 
+        not, if occupied, it checks whether cell is occupied by own piece or by enemy piece. 
+        """
+        def move_cells_check(cells_list: list) -> list:
+            list_to_be_returned = []
+            # finding out the index of cell with selected piece in collection of cells
+            for cell in cells_list:
+                if cell.position == self.position:
+                    selected_cell_index = cells_list.index(cell)
+
+            if selected_cell_index != 7:
+                for index in range(selected_cell_index + 1, 8):
+                    if cells_list[index].occupied is False:
+                        list_to_be_returned.append(cells_list[index])
+                    elif cells_list[index].occupied is True:
+                        for piece in all_pieces_lst:
+                            if piece.position == cells_list[index].position and piece.color == self.color:
+                                pass
+                            elif piece.position == cells_list[index].position and piece.color != self.color:
+                                list_to_be_returned.append(cells_list[index])
+                        break
+            if selected_cell_index != 0:
+                for index in range(selected_cell_index - 1, -1, -1):
+                    if cells_list[index].occupied is False:
+                        list_to_be_returned.append(cells_list[index])
+                    elif cells_list[index].occupied is True:
+                        for piece in all_pieces_lst:
+                            if piece.position == cells_list[index].position and piece.color == self.color:
+                                pass
+                            elif piece.position == cells_list[index].position and piece.color != self.color:
+                                list_to_be_returned.append(cells_list[index])
+                        break
+            return list_to_be_returned
+
+        if 5 > self.position[0] > -5 and self.position[0] != 0:
+            # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
+            for cell in board:
+                if cell.position[0] == self.position[0]:
+                    all_moves_cells_list.append(cell)
+
+            # sorting of collected cells
+            all_moves_cells_list = sorted(all_moves_cells_list,
+                                          key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0 else
+                                          a_cell.position[1])
+
+            possible_move_cells_list.extend(move_cells_check(all_moves_cells_list))
+            all_moves_cells_list.clear()
+
+
+        if 5 > self.position[1] > -5 and self.position[1] != 0:
+            # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
+            for cell in board:
+                if cell.position[1] == self.position[1]:
+                    all_moves_cells_list.append(cell)
+
+            # sorting of collected cells
+            all_moves_cells_list = sorted(all_moves_cells_list,
+                                          key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0 else
+                                          a_cell.position[0])
+
+            possible_move_cells_list.extend(move_cells_check(all_moves_cells_list))
+            all_moves_cells_list.clear()
+
+        if 5 > self.position[2] > -5 and self.position[2] != 0:
+            # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
+            for cell in board:
+                if cell.position[2] == self.position[2]:
+                    all_moves_cells_list.append(cell)
+
+            # sorting of collected cells
+            if self.position[2] == -3 or self.position[2] == -1:
+                all_moves_cells_list = sorted(all_moves_cells_list, key=lambda a_cell: a_cell.position[0])
+
+            possible_move_cells_list.extend(move_cells_check(all_moves_cells_list))
+
+        # Adding piece's current position cell into the list in order to highlight cells when piece is selected
+        for cell in board:
+            if self.position == cell.position:
+                possible_move_cells_list.append(cell)
+
+        # Return list of cells available for move + current cell
+        return possible_move_cells_list
 
 
 class Queen(Rook, Bishop):
@@ -157,20 +240,12 @@ class Pawn(Piece):
             elif self.position[1] == -1 and self.position[0] > 0:
                 next_cell_check(x1=1, x2=0, y1=0, y2=0, z1=1, z2=1)
 
-            # possible forward moves of white pawns in section a5-d7
-            elif -4 < self.position[0] < 0 and self.position[1] == 0 and self.position[2] < 0:
+            # possible forward moves of white pawns in section a5-l7
+            elif -4 < self.position[0] < 0 <= self.position[1] and self.position[2] <= 0:
                 next_cell_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=0)
 
-            # possible forward moves of white pawns in section e9-h11
-            elif self.position[0] > 0 and self.position[1] == 0 and 0 < self.position[2] < 4:
-                next_cell_check(x1=1, x2=0, y1=1, y2=0, z1=1, z2=1)
-
-            # possible forward moves of white pawns in section i5-l7
-            elif 0 > self.position[0] > -4 and 5 > self.position[1] > 0 and self.position[2] == 0:
-                next_cell_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=0)
-
-            # possible forward moves of white pawns in section i9-l11
-            elif self.position[0] == 0 and 5 > self.position[1] > 0 and 4 > self.position[2] > 0:
+            # possible forward moves of white pawns in section l9-h11
+            elif self.position[0] >= 0 and self.position[1] >= 0 and 0 < self.position[2] < 4:
                 next_cell_check(x1=1, x2=0, y1=1, y2=0, z1=1, z2=1)
 
 
@@ -208,19 +283,11 @@ class Pawn(Piece):
                 next_cell_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=0)
 
             # possible forward moves of black pawns in section l9-i11
-            elif self.position[0] == 0 and 0 < self.position[1] < 5 and self.position[2] > 0:
+            elif self.position[0] >= 0 and 0 <= self.position[1] and self.position[2] > 0:
                 next_cell_check(x1=1, x2=0, y1=1, y2=0, z1=1, z2=1)
 
-            # possible forward moves of black pawns in section a4-d2
-            elif self.position[0] == 0 and 0 > self.position[1] > -4 and self.position[2] < 0:
-                next_cell_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=0)
-
-            # possible forward moves of black pawns in section e9-h11
-            elif 5 > self.position[0] > 0 and self.position[1] == 0 and 4 > self.position[2] > 0:
-                next_cell_check(x1=1, x2=0, y1=1, y2=0, z1=1, z2=1)
-
-            # possible forward moves of black pawns in section e4-h2
-            elif 0 < self.position[0] < 5 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            # possible forward moves of black pawns in section a4-h2
+            elif self.position[0] >= 0 > self.position[1] > -4 and self.position[2] <= 0:
                 next_cell_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=0)
 
 
@@ -257,20 +324,12 @@ class Pawn(Piece):
             elif self.position[1] > 0 and self.position[2] == 1:
                 next_cell_check(x1=1, x2=-1, y1=1, y2=0, z1=0, z2=0)
 
-            # possible forward moves of red pawns in section h4-e2
-            elif self.position[0] > 0 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            # possible forward moves of red pawns in section h4-a2
+            elif self.position[0] >= 0 > self.position[1] > -4 and 0 >= self.position[2]:
                 next_cell_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=0)
 
-            # possible forward moves of red pawns in section i5-l7
-            elif 0 > self.position[0] > -4 and self.position[1] > 0 and self.position[2] == 0:
-                next_cell_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=0)
-
-            # possible forward moves of red pawns in section d4-a2
-            elif self.position[0] == 0 and 0 > self.position[1] > -4 and 0 > self.position[2] > -5:
-                next_cell_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=0)
-
-            # possible forward moves of red pawns in section d5-a7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and 0 > self.position[2] > -5:
+            # possible forward moves of red pawns in section a5-l7
+            elif -4 < self.position[0] < 0 <= self.position[1] and 0 >= self.position[2]:
                 next_cell_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=0)
 
 
@@ -294,12 +353,12 @@ class Pawn(Piece):
         # WHITE PAWNS
         if self.color == "white":
             # possible capture moves of white pawns in section a2-c3
-            if self.position[0] == 0 and -4 < self.position[1] < -1 and -5 < self.position[2] < -1:
+            if self.position[0] == 0 and -4 < self.position[1] < -1 and self.position[2] < -1:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=1, z1=1, z2=-1)
 
             # possible capture moves of white pawns in section f2-h3
-            elif 5 > self.position[0] > 1 and -1 > self.position[1] > -4 and self.position[2] == 0:
+            elif self.position[0] > 1 and -1 > self.position[1] > -4 and self.position[2] == 0:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=1, z1=1, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=1, z2=0)
 
@@ -314,12 +373,12 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=1, z1=1, z2=-1)
 
             # possible capture moves of white pawns in section a4-c4
-            elif self.position[0] == 0 and self.position[1] == -1 and -1 > self.position[2] > -5:
+            elif self.position[0] == 0 and self.position[1] == -1 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
 
             # possible capture moves of white pawns in section f4-h4
-            elif 5 > self.position[0] > 1 and self.position[1] == -1 and self.position[2] == 0:
+            elif self.position[0] > 1 and self.position[1] == -1 and self.position[2] == 0:
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=1)
 
@@ -336,7 +395,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=1)
 
             # possible capture moves of white pawns in section a5-c7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2] > -5:
+            elif 0 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=1)
 
@@ -356,12 +415,12 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=1, z1=1, z2=1)
 
             # possible capture moves of white pawns in section i5-i7
-            elif 0 > self.position[0] > -4 and self.position[1] == 1 and self.position[2] == 0:
+            elif -4 < self.position[0] < 0 == self.position[2] and self.position[1] == 1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=1, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
 
             # possible capture moves of white pawns in section j5-l7
-            elif 0 > self.position[0] > -4 and 5 > self.position[1] > 1 and self.position[2] == 0:
+            elif -4 < self.position[0] < 0 == self.position[2] and self.position[1] > 1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=1, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=1, z2=0)
 
@@ -371,7 +430,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=1)
 
             # possible capture moves of white pawns in section j9-l11
-            elif self.position[0] == 0 and 5 > self.position[1] > 1 and 4 > self.position[2] > 0:
+            elif self.position[0] == 0 and self.position[1] > 1 and 4 > self.position[2] > 0:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=1)
 
@@ -379,12 +438,12 @@ class Pawn(Piece):
         # BLACK PAWNS
         if self.color == "black":
             # possible capture moves of black pawns in section l7-j6
-            if -1 > self.position[0] > -4 and 5 > self.position[1] > 1 and self.position[2] == 0:
+            if -1 > self.position[0] > -4 and self.position[1] > 1 and self.position[2] == 0:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=1, z1=0, z2=0)
-                next_diagonal_cells_check(x1=1, x2=1, y1=-1, y2=1, z1=0, z2=0)
+                next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=0, z2=0)
 
             # possible capture moves of black pawns in section a7-c6
-            elif -1 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2] > -5:
+            elif -1 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=0, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=0, z1=1, z2=-1)
 
@@ -399,12 +458,12 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=1, z1=0, z2=0)
 
             # possible capture moves of black pawns in section l5-j5
-            elif self.position[0] == -1 and 5 > self.position[1] > 1 and self.position[2] == 0:
+            elif self.position[0] == -1 and self.position[1] > 1 and self.position[2] == 0:
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=1)
 
             # possible capture moves of black pawns in section a5-c5
-            elif self.position[0] == -1 and self.position[1] == 0 and -1 > self.position[2] > -5:
+            elif self.position[0] == -1 and self.position[1] == 0 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
@@ -421,7 +480,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
             # possible capture moves of black pawns in section l9-j11
-            elif self.position[0] == 0 and 5 > self.position[1] > 1 and 4 > self.position[2] > 0:
+            elif self.position[0] == 0 and self.position[1] > 1 and 4 > self.position[2] > 0:
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=1)
 
@@ -431,7 +490,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=0, x2=1, y1=0, y2=0, z1=1, z2=1)
 
             # possible capture moves of black pawns in section c4-a2
-            elif self.position[0] == 0 and 0 > self.position[1] > -4 and -1 > self.position[2] > -5:
+            elif self.position[0] == 0 and 0 > self.position[1] > -4 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
@@ -446,17 +505,17 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=1, z1=1, z2=1)
 
             # possible capture moves of black pawns in section f9-H11
-            elif 5 > self.position[0] > 1 and self.position[1] == 0 and 4 > self.position[2] > 0:
+            elif self.position[0] > 1 and self.position[1] == 0 and 4 > self.position[2] > 0:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=0, z1=1, z2=1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=1)
 
             # possible capture moves of black pawns in section e4-e2
-            elif self.position[0] == 1 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            elif self.position[0] == 1 and -4 < self.position[1] < 0 == self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=1, z2=0)
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
             # possible capture moves of black pawns in section f4-h2
-            elif 5 > self.position[0] > 1 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            elif self.position[0] > 1 and -4 < self.position[1] < 0 == self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=1, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=1, z2=0)
 
@@ -464,12 +523,12 @@ class Pawn(Piece):
         # RED PAWNS
         if self.color == "red":
             # possible capture moves of red pawns in section h11-f10
-            if 5 > self.position[0] > 1 and self.position[1] == 0 and 4 > self.position[2] > 1:
+            if self.position[0] > 1 and self.position[1] == 0 and 4 > self.position[2] > 1:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=-1)
 
             # possible capture moves of red pawns in section l11-j10
-            elif self.position[0] == 0 and 5 > self.position[1] > 1 and 4 > self.position[2] > 1:
+            elif self.position[0] == 0 and self.position[1] > 1 and 4 > self.position[2] > 1:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=1, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
@@ -484,12 +543,12 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=-1)
 
             # possible capture moves of red pawns in section h9-f9
-            elif 5 > self.position[0] > 1 and self.position[1] == 0 and self.position[2] == 1:
+            elif self.position[0] > 1 and self.position[1] == 0 and self.position[2] == 1:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section j9-l9
-            elif self.position[0] == 0 and 5 > self.position[1] > 1 and self.position[2] == 1:
+            elif self.position[0] == 0 and self.position[1] > 1 and self.position[2] == 1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=0, z2=0)
 
@@ -506,22 +565,22 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section h4-f2
-            elif 5 > self.position[0] > 1 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            elif self.position[0] > 1 and -4 < self.position[1] < 0 == self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section e4-e2
-            elif self.position[0] == 1 and 0 > self.position[1] > -4 and self.position[2] == 0:
+            elif self.position[0] == 1 and -4 < self.position[1] < 0 == self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=0, x2=0, y1=1, y2=-1, z1=1, z2=-1)
 
             # possible capture moves of red pawns in section l5-j7
-            elif 0 > self.position[0] > -4 and 5 > self.position[1] > 1 and self.position[2] == 0:
+            elif -4 < self.position[0] < 0 == self.position[2] and self.position[1] > 1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=-1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section i5-i7
-            elif 0 > self.position[0] > -4 and self.position[1] == 1 and self.position[2] == 0:
+            elif -4 < self.position[0] < 0 == self.position[2] and self.position[1] == 1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=0, z2=0)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
 
@@ -531,17 +590,17 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=-1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section c4-a2
-            elif self.position[0] == 0 and 0 > self.position[1] > -4 and -1 > self.position[2] > -5:
+            elif self.position[0] == 0 and 0 > self.position[1] > -4 and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=1)
 
             # possible capture moves of red pawns in section i5-i7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and self.position[2] == -1:
+            elif -4 < self.position[0] < 0 == self.position[1] and self.position[2] == -1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=1, z1=0, z2=0)
 
             # possible capture moves of red pawns in section d5-a7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2] > -5:
+            elif -4 < self.position[0] < 0 == self.position[1] and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=1)
 
