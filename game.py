@@ -72,14 +72,13 @@ while running:
                     selected_piece_list.clear()
                     cells_for_move[-1].occupied = False
                     cells_for_move.clear()
-
+                    break
 
         elif event.type == pygame.MOUSEBUTTONUP:
             pass
 
 
     # UPDATE
-
 
     # RENDERING
     screen.fill(BLACK)
@@ -93,6 +92,5 @@ while running:
 
     # SCREEN TURN OVER
     pygame.display.flip()
-
 
 pygame.quit()

@@ -79,8 +79,426 @@ class Piece(pygame.sprite.Sprite):
 
 
 class Bishop(Piece):
-    def show_possible_moves(self):
-        pass
+    def bishop_possible_moves(self):
+        super().possible_moves()
+        possible_move_cells_list = []
+        up_right_diagonal = []
+        up_left_diagonal = []
+        down_right_diagonal = []
+        down_left_diagonal = []
+
+        """
+        The function below receives a list of cells (diagonal of cells) and checks cells in the list on the following:
+        - whether a cell is occupied by another piece or not,
+        - if occupied, whether cell is occupied by own piece or by enemy piece.
+        The list of possible moves is formed based on results of cheking 
+        """
+        def move_cells_check(list_of_cells: list) -> list:
+            list_to_be_returned = []
+            for cell in list_of_cells:
+                if cell.occupied is False and cell not in possible_move_cells_list:
+                    list_to_be_returned.append(cell)
+                elif cell.occupied is True and cell not in possible_move_cells_list:
+                    for piece in all_pieces_lst:
+                        if piece.position == cell.position and piece.color == self.color:
+                            pass
+                        elif piece.position == cell.position and piece.color != self.color:
+                            list_to_be_returned.append(cell)
+                    break
+            return list_to_be_returned
+
+        '''
+        Search for possible moves relatively axis X. 
+        Below specified cells must not be taken into consideration, otherwise the method works not in proper way
+        '''
+        line_perpendicular_to_axis_x = []
+        if 5 > self.position[0] > -5 and self.position[0] != 0 and self.position not in [
+            [-3, 4, 0], [-2, 4, 0], [-1, 4, 0], [-2, 3, 0], [-1, 3, 0], [-1, 2, 0],
+            [-3, 0, -4], [-2, 0, -4], [-1, 0, -4], [-2, 0, -3], [-1, 0, -3], [-1, 0, -2],
+            [3, -4, 0], [2, -4, 0], [1, -4, 0], [2, -3, 0], [1, -3, 0], [1, -2, 0],
+            [3, 0, 4], [2, 0, 4], [1, 0, 4], [2, 0, 3], [1, 0, 3], [1, 0, 2]
+        ]:
+            # collecting cells in line that includes cell with selected piece and that is perpendicular to axis X
+            for cell in board:
+                if cell.position[0] == self.position[0]:
+                    line_perpendicular_to_axis_x.append(cell)
+
+            # sorting of cell in "line_perpendicular_to_axis_x"
+            line_perpendicular_to_axis_x = sorted(line_perpendicular_to_axis_x,
+                                                  key=lambda a_cell: a_cell.position[2]
+                                                  if a_cell.position[2] != 0 else a_cell.position[1])[::-1]
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_x"
+            for cell in line_perpendicular_to_axis_x:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_x.index(cell)
+
+            line_parallel_to_axis_x = []
+            counter = 0
+
+            if selected_cell_index != 7:
+                for a_cell in line_perpendicular_to_axis_x[selected_cell_index + 1: 8]:
+                    counter += 1
+                    if a_cell.position[1] == 0:
+                        for cell in board:
+                            if cell.position[2] == a_cell.position[2]:
+                                line_parallel_to_axis_x.append(cell)
+
+                        if a_cell.position[2] == -3 or a_cell.position[2] == -1:
+                            line_parallel_to_axis_x = sorted(line_parallel_to_axis_x,
+                                                             key=lambda a__cell: a__cell.position[0])
+                        else:
+                            line_parallel_to_axis_x = line_parallel_to_axis_x[::-1]
+
+                        for the_cell in line_parallel_to_axis_x:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_x.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_x[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_x[the_cell_index - counter])
+
+                    elif a_cell.position[2] == 0:
+                        for cell in board:
+                            if cell.position[1] == a_cell.position[1]:
+                                line_parallel_to_axis_x.append(cell)
+
+                        line_parallel_to_axis_x = sorted(line_parallel_to_axis_x,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[0])
+
+                        for the_cell in line_parallel_to_axis_x:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_x.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_x[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_x[the_cell_index - counter])
+
+                    line_parallel_to_axis_x.clear()
+
+            counter = 0
+            if selected_cell_index != 0:
+                for a_cell in line_perpendicular_to_axis_x[selected_cell_index - 1:: -1]:
+                    counter += 1
+                    if a_cell.position[1] == 0:
+                        for cell in board:
+                            if cell.position[2] == a_cell.position[2]:
+                                line_parallel_to_axis_x.append(cell)
+
+                        if a_cell.position[2] == -3 or a_cell.position[2] == -1:
+                            line_parallel_to_axis_x = sorted(line_parallel_to_axis_x,
+                                                             key=lambda a__cell: a__cell.position[0])
+                        else:
+                            line_parallel_to_axis_x = line_parallel_to_axis_x[::-1]
+
+                        for the_cell in line_parallel_to_axis_x:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_x.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_x[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_x[the_cell_index - counter])
+
+                    elif a_cell.position[2] == 0:
+                        for cell in board:
+                            if cell.position[1] == a_cell.position[1]:
+                                line_parallel_to_axis_x.append(cell)
+
+                        line_parallel_to_axis_x = sorted(line_parallel_to_axis_x,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[0])
+
+                        for the_cell in line_parallel_to_axis_x:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_x.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_x[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_x[the_cell_index - counter])
+
+                    line_parallel_to_axis_x.clear()
+
+        possible_move_cells_list.extend(move_cells_check(up_right_diagonal))
+        up_right_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(up_left_diagonal))
+        up_left_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(down_right_diagonal))
+        down_right_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(down_left_diagonal))
+        down_left_diagonal.clear()
+
+        '''
+        Search for possible moves relatively axis Y. 
+        Below specified cells must not be taken into consideration, otherwise the method works not in proper way
+        '''
+        line_perpendicular_to_axis_y = []
+        if 5 > self.position[1] > -5 and self.position[1] != 0 and self.position not in [
+            [4, -3, 0], [4, -2, 0], [4, -1, 0], [3, -2, 0], [3, -1, 0], [2, -1, 0],
+            [0, -3, -4], [0, -2, -4], [0, -1, -4], [0, -2, -3], [0, -1, -3], [0, -1, -2],
+            [-4, 3, 0], [-4, 2, 0], [-4, 1, 0], [-3, 2, 0], [-3, 1, 0], [-2, 1, 0],
+            [0, 3, 4], [0, 2, 4], [0, 1, 4], [0, 2, 3], [0, 1, 3], [0, 1, 2]
+        ]:
+            # collecting cells in line that includes cell with selected piece and that is perpendicular to axis Y
+            for cell in board:
+                if cell.position[1] == self.position[1]:
+                    line_perpendicular_to_axis_y.append(cell)
+
+            # sorting of cell in "line_perpendicular_to_axis_y"
+            line_perpendicular_to_axis_y = sorted(line_perpendicular_to_axis_y,
+                                                  key=lambda a_cell: a_cell.position[2]
+                                                  if a_cell.position[2] != 0 else a_cell.position[0])
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_y"
+            for cell in line_perpendicular_to_axis_y:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_y.index(cell)
+
+            line_parallel_to_axis_y = []
+            counter = 0
+
+            if selected_cell_index != 7:
+                for a_cell in line_perpendicular_to_axis_y[selected_cell_index + 1: 8]:
+                    counter += 1
+                    if a_cell.position[0] == 0:
+                        for cell in board:
+                            if cell.position[2] == a_cell.position[2]:
+                                line_parallel_to_axis_y.append(cell)
+
+                        if a_cell.position[2] == -3 or a_cell.position[2] == -1:
+                            line_parallel_to_axis_y = sorted(line_parallel_to_axis_y,
+                                                             key=lambda a__cell: a__cell.position[0])[::-1]
+
+                        for the_cell in line_parallel_to_axis_y:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_y.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_y[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_y[the_cell_index - counter])
+
+                    elif a_cell.position[2] == 0:
+                        for cell in board:
+                            if cell.position[0] == a_cell.position[0]:
+                                line_parallel_to_axis_y.append(cell)
+
+                        line_parallel_to_axis_y = sorted(line_parallel_to_axis_y,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[1])
+
+                        for the_cell in line_parallel_to_axis_y:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_y.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_y[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_y[the_cell_index - counter])
+
+                    line_parallel_to_axis_y.clear()
+
+            counter = 0
+            if selected_cell_index != 0:
+                for a_cell in line_perpendicular_to_axis_y[selected_cell_index - 1:: -1]:
+                    counter += 1
+                    if a_cell.position[0] == 0:
+                        for cell in board:
+                            if cell.position[2] == a_cell.position[2]:
+                                line_parallel_to_axis_y.append(cell)
+
+                        if a_cell.position[2] == -3 or a_cell.position[2] == -1:
+                            line_parallel_to_axis_y = sorted(line_parallel_to_axis_y,
+                                                             key=lambda a__cell: a__cell.position[0])[::-1]
+
+                        for the_cell in line_parallel_to_axis_y:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_y.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_y[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_y[the_cell_index - counter])
+
+                    elif a_cell.position[2] == 0:
+                        for cell in board:
+                            if cell.position[0] == a_cell.position[0]:
+                                line_parallel_to_axis_y.append(cell)
+
+                        line_parallel_to_axis_y = sorted(line_parallel_to_axis_y,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[1])
+
+                        for the_cell in line_parallel_to_axis_y:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_y.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_y[the_cell_index + counter])
+
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_y[the_cell_index - counter])
+
+                    line_parallel_to_axis_y.clear()
+
+        possible_move_cells_list.extend(move_cells_check(up_right_diagonal))
+        up_right_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(up_left_diagonal))
+        up_left_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(down_right_diagonal))
+        down_right_diagonal.clear()
+
+        possible_move_cells_list.extend(move_cells_check(down_left_diagonal))
+        down_left_diagonal.clear()
+
+        '''
+        Search for possible moves relatively axis Z. 
+        Below specified cells must not be taken into consideration, otherwise the method works not in proper way
+        '''
+        line_perpendicular_to_axis_z = []
+        if 5 > self.position[2] > -5 and self.position[2] != 0 and self.position not in [
+            [-4, 0, -3], [-4, 0, -2], [-4, 0, -1], [-3, 0, -2], [-3, 0, -1], [-2, 0, -1],
+            [0, -4, -3], [0, -4, -2], [0, -4, -1], [0, -3, -2], [0, -3, -1], [0, -2, -1],
+            [4, 0, 3], [4, 0, 2], [4, 0, 1], [3, 0, 2], [3, 0, 1], [2, 0, 1],
+            [0, 4, 3], [0, 4, 2], [0, 4, 1], [0, 3, 2], [0, 3, 1], [0, 2, 1]
+        ]:
+            # collecting cells in line that includes cell with selected piece and that is perpendicular to axis Z
+            for cell in board:
+                if cell.position[2] == self.position[2]:
+                    line_perpendicular_to_axis_z.append(cell)
+
+            # sorting of cell in "line_perpendicular_to_axis_z"
+            if self.position[2] == -3 or self.position[2] == -1:
+                line_perpendicular_to_axis_z = sorted(line_perpendicular_to_axis_z,
+                                                      key=lambda a_cell: a_cell.position[0])
+            else:
+                line_perpendicular_to_axis_z = line_perpendicular_to_axis_z[::-1]
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_z"
+            for cell in line_perpendicular_to_axis_z:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_z.index(cell)
+
+            line_parallel_to_axis_z = []
+            counter = 0
+
+            if selected_cell_index != 7:
+                for a_cell in line_perpendicular_to_axis_z[selected_cell_index + 1: 8]:
+                    counter += 1
+                    if a_cell.position[0] == 0:
+                        for cell in board:
+                            if cell.position[1] == a_cell.position[1]:
+                                line_parallel_to_axis_z.append(cell)
+
+                        line_parallel_to_axis_z = sorted(line_parallel_to_axis_z,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[0])
+
+                        for the_cell in line_parallel_to_axis_z:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_z.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_z[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_z[the_cell_index - counter])
+
+                    elif a_cell.position[1] == 0:
+                        for cell in board:
+                            if cell.position[0] == a_cell.position[0]:
+                                line_parallel_to_axis_z.append(cell)
+
+                        line_parallel_to_axis_z = sorted(line_parallel_to_axis_z,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[1])
+
+                        for the_cell in line_parallel_to_axis_z:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_z.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_right_diagonal.append(line_parallel_to_axis_z[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_right_diagonal.append(line_parallel_to_axis_z[the_cell_index - counter])
+
+                    line_parallel_to_axis_z.clear()
+
+            counter = 0
+            if selected_cell_index != 0:
+                for a_cell in line_perpendicular_to_axis_z[selected_cell_index - 1:: -1]:
+                    counter += 1
+                    if a_cell.position[0] == 0:
+                        for cell in board:
+                            if cell.position[1] == a_cell.position[1]:
+                                line_parallel_to_axis_z.append(cell)
+
+                        line_parallel_to_axis_z = sorted(line_parallel_to_axis_z,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[0])
+
+                        for the_cell in line_parallel_to_axis_z:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_z.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_z[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_z[the_cell_index - counter])
+
+                    elif a_cell.position[1] == 0:
+                        for cell in board:
+                            if cell.position[0] == a_cell.position[0]:
+                                line_parallel_to_axis_z.append(cell)
+
+                        line_parallel_to_axis_z = sorted(line_parallel_to_axis_z,
+                                                         key=lambda a__cell: a__cell.position[2]
+                                                         if a__cell.position[2] != 0 else a__cell.position[1])
+
+                        for the_cell in line_parallel_to_axis_z:
+                            if the_cell.position == a_cell.position:
+                                the_cell_index = line_parallel_to_axis_z.index(the_cell)
+
+                        if the_cell_index + counter < 8:
+                            up_left_diagonal.append(line_parallel_to_axis_z[the_cell_index + counter])
+                        if the_cell_index - counter >= 0:
+                            down_left_diagonal.append(line_parallel_to_axis_z[the_cell_index - counter])
+
+                    line_parallel_to_axis_z.clear()
+
+        possible_move_cells_list.extend(move_cells_check(up_right_diagonal))
+
+        possible_move_cells_list.extend(move_cells_check(up_left_diagonal))
+
+        possible_move_cells_list.extend(move_cells_check(down_right_diagonal))
+
+        possible_move_cells_list.extend(move_cells_check(down_left_diagonal))
+
+        # Adding piece's current position cell into the list in order to highlight cells when piece is selected
+        for cell in board:
+            if self.position == cell.position:
+                possible_move_cells_list.append(cell)
+
+        # Return list of cells available for move + current cell
+        return possible_move_cells_list
+
+    def highlight_cells(self):
+        super().highlight_cells()
+        cells_to_be_highlighted = self.bishop_possible_moves()
+        for cell in cells_to_be_highlighted:
+            if cell.initial_color == dark_color:
+                cell.current_color = GREEN_DARK
+            else:
+                cell.current_color = GREEN_LIGHT
+        return cells_to_be_highlighted
 
 
 class King(Piece):
@@ -94,14 +512,18 @@ class Knight(Piece):
 
 
 class Rook(Piece):
-    def possible_moves(self):
+    def rook_possible_moves(self):
         super().possible_moves()
         possible_move_cells_list = []
         all_moves_cells_list = []
 
         """
-        The function below checks cells in corresponding list of cells: whether a cell is occupied by another piece or 
-        not, if occupied, it checks whether cell is occupied by own piece or by enemy piece. 
+        The function below receives a list of cells (a line of cells perpendicular to corresponding axis), finds the 
+        index of cell with selected piece and then checks cells in the line which index is less than found index and 
+        cells in the line which index is greater than found index. The cells are checked on the following:
+        - whether a cell is occupied by another piece or not,
+        - if occupied, whether cell is occupied by own piece or by enemy piece.
+        The list of possible moves is formed based on results of chcking 
         """
         def move_cells_check(cells_list: list) -> list:
             list_to_be_returned = []
@@ -134,6 +556,7 @@ class Rook(Piece):
                         break
             return list_to_be_returned
 
+        # Moves perpendicular to axis X
         if 5 > self.position[0] > -5 and self.position[0] != 0:
             # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
             for cell in board:
@@ -148,7 +571,7 @@ class Rook(Piece):
             possible_move_cells_list.extend(move_cells_check(all_moves_cells_list))
             all_moves_cells_list.clear()
 
-
+        # Moves perpendicular to axis Y
         if 5 > self.position[1] > -5 and self.position[1] != 0:
             # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
             for cell in board:
@@ -163,6 +586,7 @@ class Rook(Piece):
             possible_move_cells_list.extend(move_cells_check(all_moves_cells_list))
             all_moves_cells_list.clear()
 
+        # Moves perpendicular to axis Z
         if 5 > self.position[2] > -5 and self.position[2] != 0:
             # collecting all cells available for move (obstacles(other pieces) are not taken into consideration)
             for cell in board:
@@ -183,10 +607,28 @@ class Rook(Piece):
         # Return list of cells available for move + current cell
         return possible_move_cells_list
 
+    def highlight_cells(self):
+        super().highlight_cells()
+        cells_to_be_highlighted = self.rook_possible_moves()
+        for cell in cells_to_be_highlighted:
+            if cell.initial_color == dark_color:
+                cell.current_color = GREEN_DARK
+            else:
+                cell.current_color = GREEN_LIGHT
+        return cells_to_be_highlighted
+
 
 class Queen(Rook, Bishop):
-    def show_possible_moves(self):
-        pass
+    def highlight_cells(self):
+        super().highlight_cells()
+        cells_to_be_highlighted = self.rook_possible_moves()[:-1]
+        cells_to_be_highlighted.extend(self.bishop_possible_moves())
+        for cell in cells_to_be_highlighted:
+            if cell.initial_color == dark_color:
+                cell.current_color = GREEN_DARK
+            else:
+                cell.current_color = GREEN_LIGHT
+        return cells_to_be_highlighted
 
 
 class Pawn(Piece):
@@ -363,7 +805,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=1, z2=0)
 
             # possible capture moves of white pawns in section d2-d3
-            elif self.position[0] == 0 and -1 > self.position[1] > -4 and self.position[2] == -1:
+            elif self.position[0] == 0 and -4 < self.position[1] < -1 == self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=0, y1=1, y2=1, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=1, z1=0, z2=0)
 
@@ -395,12 +837,12 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=1)
 
             # possible capture moves of white pawns in section a5-c7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and -1 > self.position[2]:
+            elif -4 < self.position[0] < 0 == self.position[1] and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=1)
 
             # possible capture moves of white pawns in section d5-d7
-            elif 0 > self.position[0] > -4 and self.position[1] == 0 and self.position[2] == -1:
+            elif -4 < self.position[0] < 0 == self.position[1] and self.position[2] == -1:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=0, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=1, z1=0, z2=0)
 
@@ -453,7 +895,7 @@ class Pawn(Piece):
                 next_diagonal_cells_check(x1=1, x2=1, y1=0, y2=0, z1=1, z2=-1)
 
             # possible capture moves of black pawns in section d7-d6
-            elif -1 > self.position[0] > -4 and self.position[1] == 0 and self.position[2] == -1:
+            elif -4 < self.position[0] < -1 == self.position[2] and self.position[1] == 0:
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=1, y1=1, y2=1, z1=0, z2=0)
 
@@ -603,7 +1045,6 @@ class Pawn(Piece):
             elif -4 < self.position[0] < 0 == self.position[1] and -1 > self.position[2]:
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=-1)
                 next_diagonal_cells_check(x1=1, x2=-1, y1=1, y2=0, z1=1, z2=1)
-
 
         # Adding piece's current position cell into the list in order to highlight cells when piece is selected
         for cell in board:
