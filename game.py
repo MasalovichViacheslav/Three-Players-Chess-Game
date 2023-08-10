@@ -1,7 +1,7 @@
 import pygame
 from board import points_dict, board, rect_center_coords, draw_symbol
-from colors import GOLD_LIGHT, GOLD_VERY_DARK, BLACK
-from pieces import all_pieces, all_pieces_lst
+from colors import GOLD_LIGHT, BLACK
+from pieces import all_pieces_lst
 
 WIDTH = 1200
 HEIGHT = 800
@@ -15,7 +15,7 @@ pygame.display.set_caption("Chess Game")
 clock = pygame.time.Clock()
 
 # BOARD CONSTANT ELEMENTS DRAWING
-board_background = pygame.Surface((WIDTH - 300, HEIGHT))
+board_background = pygame.Surface((WIDTH * 0.9, HEIGHT * 0.9))
 board_background_rect = board_background.get_rect()
 
 # Board frame drawing
@@ -48,35 +48,51 @@ while running:
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             for piece in all_pieces_lst:
+                # selecting a piece
                 if piece.rect.collidepoint(event.pos) and piece.is_selected is False and len(selected_piece_list) == 0:
                     piece.is_selected = True
                     cells_for_move = piece.highlight_cells()
                     selected_piece_list.append(piece)
                     break
 
+                # unselecting selected piece
                 elif piece.rect.collidepoint(event.pos) and piece.is_selected is True and len(selected_piece_list) == 1:
                     piece.is_selected = False
                     cells_for_move = piece.unhighlight_cells()
                     selected_piece_list.clear()
                     break
 
+            # piece move and events triggered by it
             for cell in cells_for_move[:-1]:
                 if cell.rect.collidepoint(event.pos):
+
+                    # captured piece delete
                     for piece in all_pieces_lst:
                         if piece.position == cell.position:
                             all_pieces_lst.remove(piece)
+
+                    # checking whether castling move is available or not
+                    if selected_piece_list[0].name in ["w_King", "b_King", "r_King"] and \
+                            len(selected_piece_list[0].castling()) != 0 and \
+                            cell in [key for key in selected_piece_list[0].castling().keys()]:
+                        rook = selected_piece_list[0].castling()[cell][0]
+                        rook_current_cell = selected_piece_list[0].castling()[cell][1]
+                        rook_new_cell = selected_piece_list[0].castling()[cell][2]
+                        # rook move during castling
+                        rook_current_cell.occupied = False
+                        rook.position = rook_new_cell.position
+                        rook_new_cell.occupied = True
+
+                    # selected piece move
                     selected_piece_list[0].unhighlight_cells()
                     selected_piece_list[0].position = cell.position
                     cell.occupied = True
+                    selected_piece_list[0].first_move = False
                     selected_piece_list[0].is_selected = False
                     selected_piece_list.clear()
                     cells_for_move[-1].occupied = False
                     cells_for_move.clear()
                     break
-
-        elif event.type == pygame.MOUSEBUTTONUP:
-            pass
-
 
     # UPDATE
 

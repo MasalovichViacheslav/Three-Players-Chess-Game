@@ -38,12 +38,13 @@ r_rook = pygame.image.load(os.path.join(img_dir, "r_rook.png")).convert()
 
 # Piece class (sprite) creation
 class Piece(pygame.sprite.Sprite):
-    def __init__(self, name: str, color: str, position: list, selection_status: bool, image):
+    def __init__(self, name: str, color: str, position: list, selection_status: bool, first_move_status: bool, image):
         pygame.sprite.Sprite.__init__(self)
         self.name = name
         self.color = color
         self.position = position
         self.is_selected = selection_status
+        self.first_move = first_move_status
         self.image = pygame.transform.scale_by(image, 0.4)
         self.image.set_colorkey(SPECIAL_WHITE)
         self.rect = self.image.get_rect()
@@ -503,8 +504,508 @@ class Bishop(Piece):
 
 
 class King(Piece):
-    def show_possible_moves(self):
-        pass
+    def castling(self):
+        dict_to_be_returned = {}
+        # white king
+        if self.color == "white" and self.first_move is True:
+            for piece in all_pieces_lst:
+                if piece.name == "w_r_Rook":
+                    right_rook = piece
+                if piece.name == "w_l_Rook":
+                    left_rook = piece
+            for cell in board:
+                if cell.name == "f1":
+                    f1 = cell
+                if cell.name == "g1":
+                    g1 = cell
+                if cell.name == "b1":
+                    b1 = cell
+                if cell.name == "c1":
+                    c1 = cell
+                if cell.name == "d1":
+                    d1 = cell
+                if cell.name == "h1":
+                    h1 = cell
+                if cell.name == "a1":
+                    a1 = cell
+            if right_rook.first_move is True and f1.occupied is False and g1.occupied is False:
+                dict_to_be_returned[g1] = [right_rook, h1, f1]
+            if left_rook.first_move is True and b1.occupied is False and c1.occupied is False and d1.occupied is False:
+                dict_to_be_returned[c1] = [left_rook, a1, d1]
+
+        # black king
+        if self.color == "black" and self.first_move is True:
+            for piece in all_pieces_lst:
+                if piece.name == "b_r_Rook":
+                    right_rook = piece
+                if piece.name == "b_l_Rook":
+                    left_rook = piece
+            for cell in board:
+                if cell.name == "c8":
+                    c8 = cell
+                if cell.name == "b8":
+                    b8 = cell
+                if cell.name == "k8":
+                    k8 = cell
+                if cell.name == "j8":
+                    j8 = cell
+                if cell.name == "i8":
+                    i8 = cell
+                if cell.name == "a8":
+                    a8 = cell
+                if cell.name == "l8":
+                    l8 = cell
+            if right_rook.first_move is True and c8.occupied is False and b8.occupied is False:
+                dict_to_be_returned[b8] = [right_rook, a8, c8]
+            if left_rook.first_move is True and k8.occupied is False and j8.occupied is False and i8.occupied is False:
+                dict_to_be_returned[j8] = [left_rook, l8, i8]
+
+        # red king
+        if self.color == "red" and self.first_move is True:
+            for piece in all_pieces_lst:
+                if piece.name == "r_r_Rook":
+                    right_rook = piece
+                if piece.name == "r_l_Rook":
+                    left_rook = piece
+            for cell in board:
+                if cell.name == "j12":
+                    j12 = cell
+                if cell.name == "k12":
+                    k12 = cell
+                if cell.name == "g12":
+                    g12 = cell
+                if cell.name == "f12":
+                    f12 = cell
+                if cell.name == "e12":
+                    e12 = cell
+                if cell.name == "l12":
+                    l12 = cell
+                if cell.name == "h12":
+                    h12 = cell
+            if right_rook.first_move is True and j12.occupied is False and k12.occupied is False:
+                dict_to_be_returned[k12] = [right_rook, l12, j12]
+            if left_rook.first_move is True and g12.occupied is False and f12.occupied is False and \
+                    e12.occupied is False:
+                dict_to_be_returned[f12] = [left_rook, h12, e12]
+
+        return dict_to_be_returned
+
+    def possible_moves(self):
+        super().possible_moves()
+        possible_move_cells_list = []
+        move_cells_to_be_checked = []
+
+        """
+        The function below receives a list of cells and checks cells in the list on the following:
+        - whether a cell is occupied by another piece or not,
+        - if occupied, whether cell is occupied by own piece or by enemy piece.
+        The list of possible moves is formed based on results of checking 
+        """
+
+        def move_cells_check(cells_list: list):
+            for cell in cells_list:
+                if cell.occupied is False and cell not in possible_move_cells_list:
+                    possible_move_cells_list.append(cell)
+                elif cell.occupied is True and cell not in possible_move_cells_list:
+                    for piece in all_pieces_lst:
+                        if piece.position == cell.position and piece.color != self.color:
+                            possible_move_cells_list.append(cell)
+
+        # search for possible moves relatively axis X
+        line_perpendicular_to_axis_x = []
+        if 5 > self.position[0] > -5 and self.position[0] != 0:
+            for cell in board:
+                if cell.position[0] == self.position[0]:
+                    line_perpendicular_to_axis_x.append(cell)
+
+            # sorting cells in "line_perpendicular_to_axis_x"
+            line_perpendicular_to_axis_x = sorted(line_perpendicular_to_axis_x,
+                                                  key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0
+                                                  else a_cell.position[1])
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_x"
+            for cell in line_perpendicular_to_axis_x:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_x.index(cell)
+                    selected_cell = cell
+
+            # cell above and cell below the cell with selected king
+            center_line_parallel_to_axis_x = []
+            if selected_cell.position[1] == 0:
+                for cell in board:
+                    if cell.position[2] == selected_cell.position[2]:
+                        center_line_parallel_to_axis_x.append(cell)
+
+                if selected_cell.position[2] == -3 or selected_cell.position[2] == -1:
+                    center_line_parallel_to_axis_x = sorted(center_line_parallel_to_axis_x,
+                                                            key=lambda a__cell: a__cell.position[0])[::-1]
+
+                the_selected_cell_index = center_line_parallel_to_axis_x.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_x[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_x[the_selected_cell_index - 1])
+
+            elif selected_cell.position[2] == 0:
+                for cell in board:
+                    if cell.position[1] == selected_cell.position[1]:
+                        center_line_parallel_to_axis_x.append(cell)
+
+                center_line_parallel_to_axis_x = sorted(center_line_parallel_to_axis_x,
+                                                        key=lambda a__cell: a__cell.position[2]
+                                                        if a__cell.position[2] != 0 else a__cell.position[0])
+
+                the_selected_cell_index = center_line_parallel_to_axis_x.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_x[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_x[the_selected_cell_index - 1])
+
+            # 3 nearby cells to the right
+            right_line_parallel_to_axis_x = []
+            if selected_cell_index != 7:
+                right_nearby_cell = line_perpendicular_to_axis_x[selected_cell_index + 1]
+                move_cells_to_be_checked.append(right_nearby_cell)
+                if right_nearby_cell.position[1] == 0:
+                    for cell in board:
+                        if cell.position[2] == right_nearby_cell.position[2]:
+                            right_line_parallel_to_axis_x.append(cell)
+
+                    if right_nearby_cell.position[2] == -3 or right_nearby_cell.position[2] == -1:
+                        right_line_parallel_to_axis_x = sorted(right_line_parallel_to_axis_x,
+                                                               key=lambda a__cell: a__cell.position[0])[::-1]
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_x.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_x[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_x[right_nearby_cell_index - 1])
+
+                elif right_nearby_cell.position[2] == 0:
+                    for cell in board:
+                        if cell.position[1] == right_nearby_cell.position[1]:
+                            right_line_parallel_to_axis_x.append(cell)
+
+                    right_line_parallel_to_axis_x = sorted(right_line_parallel_to_axis_x,
+                                                           key=lambda a__cell: a__cell.position[2]
+                                                           if a__cell.position[2] != 0 else a__cell.position[0])
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_x.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_x[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_x[right_nearby_cell_index - 1])
+
+            # 3 nearby cells to the left
+            left_line_parallel_to_axis_x = []
+            if selected_cell_index != 0:
+                left_nearby_cell = line_perpendicular_to_axis_x[selected_cell_index - 1]
+                move_cells_to_be_checked.append(left_nearby_cell)
+                if left_nearby_cell.position[1] == 0:
+                    for cell in board:
+                        if cell.position[2] == left_nearby_cell.position[2]:
+                            left_line_parallel_to_axis_x.append(cell)
+
+                    if left_nearby_cell.position[2] == -3 or left_nearby_cell.position[2] == -1:
+                        left_line_parallel_to_axis_x = sorted(left_line_parallel_to_axis_x,
+                                                              key=lambda a__cell: a__cell.position[0])[::-1]
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_x.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_x[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_x[left_nearby_cell_index - 1])
+
+                elif left_nearby_cell.position[2] == 0:
+                    for cell in board:
+                        if cell.position[1] == left_nearby_cell.position[1]:
+                            left_line_parallel_to_axis_x.append(cell)
+
+                    left_line_parallel_to_axis_x = sorted(left_line_parallel_to_axis_x,
+                                                          key=lambda a__cell: a__cell.position[2]
+                                                          if a__cell.position[2] != 0 else a__cell.position[0])
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_x.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_x[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_x[left_nearby_cell_index - 1])
+
+        move_cells_check(move_cells_to_be_checked)
+        move_cells_to_be_checked.clear()
+
+        # search for possible moves relatively axis Y
+        line_perpendicular_to_axis_y = []
+        if 5 > self.position[1] > -5 and self.position[1] != 0:
+            for cell in board:
+                if cell.position[1] == self.position[1]:
+                    line_perpendicular_to_axis_y.append(cell)
+
+            # sorting cells in "line_perpendicular_to_axis_y"
+            line_perpendicular_to_axis_y = sorted(line_perpendicular_to_axis_y,
+                                                  key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0 else
+                                                  a_cell.position[0])
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_y"
+            for cell in line_perpendicular_to_axis_y:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_y.index(cell)
+                    selected_cell = cell
+
+            # 2 cells above and below the cell with selected king
+            center_line_parallel_to_axis_y = []
+            if selected_cell.position[0] == 0:
+                for cell in board:
+                    if cell.position[2] == selected_cell.position[2]:
+                        center_line_parallel_to_axis_y.append(cell)
+
+                if selected_cell.position[2] == -3 or selected_cell.position[2] == -1:
+                    center_line_parallel_to_axis_y = sorted(center_line_parallel_to_axis_y,
+                                                            key=lambda a__cell: a__cell.position[0])[::-1]
+
+                the_selected_cell_index = center_line_parallel_to_axis_y.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_y[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_y[the_selected_cell_index - 1])
+
+            elif selected_cell.position[2] == 0:
+                for cell in board:
+                    if cell.position[0] == selected_cell.position[0]:
+                        center_line_parallel_to_axis_y.append(cell)
+
+                center_line_parallel_to_axis_y = sorted(center_line_parallel_to_axis_y,
+                                                        key=lambda a__cell: a__cell.position[2]
+                                                        if a__cell.position[2] != 0 else a__cell.position[1])
+
+                the_selected_cell_index = center_line_parallel_to_axis_y.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_y[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_y[the_selected_cell_index - 1])
+
+            # 3 nearby cells to the right
+            right_line_parallel_to_axis_y = []
+            if selected_cell_index != 7:
+                right_nearby_cell = line_perpendicular_to_axis_y[selected_cell_index + 1]
+                move_cells_to_be_checked.append(right_nearby_cell)
+                if right_nearby_cell.position[0] == 0:
+                    for cell in board:
+                        if cell.position[2] == right_nearby_cell.position[2]:
+                            right_line_parallel_to_axis_y.append(cell)
+
+                    if right_nearby_cell.position[2] == -3 or right_nearby_cell.position[2] == -1:
+                        right_line_parallel_to_axis_y = sorted(right_line_parallel_to_axis_y,
+                                                               key=lambda a__cell: a__cell.position[0])[::-1]
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_y.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_y[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_y[right_nearby_cell_index - 1])
+
+                elif right_nearby_cell.position[2] == 0:
+                    for cell in board:
+                        if cell.position[0] == right_nearby_cell.position[0]:
+                            right_line_parallel_to_axis_y.append(cell)
+
+                    right_line_parallel_to_axis_y = sorted(right_line_parallel_to_axis_y,
+                                                           key=lambda a__cell: a__cell.position[2]
+                                                           if a__cell.position[2] != 0 else a__cell.position[1])
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_y.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_y[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_y[right_nearby_cell_index - 1])
+
+            # 3 nearby cells to the right
+            left_line_parallel_to_axis_y = []
+            if selected_cell_index != 0:
+                left_nearby_cell = line_perpendicular_to_axis_y[selected_cell_index - 1]
+                move_cells_to_be_checked.append(left_nearby_cell)
+                if left_nearby_cell.position[0] == 0:
+                    for cell in board:
+                        if cell.position[2] == left_nearby_cell.position[2]:
+                            left_line_parallel_to_axis_y.append(cell)
+
+                    if left_nearby_cell.position[2] == -3 or left_nearby_cell.position[2] == -1:
+                        left_line_parallel_to_axis_y = sorted(left_line_parallel_to_axis_y,
+                                                              key=lambda a__cell: a__cell.position[0])[::-1]
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_y.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_y[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_y[left_nearby_cell_index - 1])
+
+                elif left_nearby_cell.position[2] == 0:
+                    for cell in board:
+                        if cell.position[0] == left_nearby_cell.position[0]:
+                            left_line_parallel_to_axis_y.append(cell)
+
+                    left_line_parallel_to_axis_y = sorted(left_line_parallel_to_axis_y,
+                                                          key=lambda a__cell: a__cell.position[2]
+                                                          if a__cell.position[2] != 0 else a__cell.position[1])
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_y.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_y[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_y[left_nearby_cell_index - 1])
+
+        move_cells_check(move_cells_to_be_checked)
+        move_cells_to_be_checked.clear()
+
+        # search for possible moves relatively axis Z
+        line_perpendicular_to_axis_z = []
+        if 5 > self.position[2] > -5 and self.position[2] != 0:
+            for cell in board:
+                if cell.position[2] == self.position[2]:
+                    line_perpendicular_to_axis_z.append(cell)
+
+            # sorting cells in "line_perpendicular_to_axis_z"
+            if self.position[2] == -3 or self.position[2] == -1:
+                line_perpendicular_to_axis_z = sorted(line_perpendicular_to_axis_z,
+                                                      key=lambda a_cell: a_cell.position[0])[::-1]
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_z"
+            for cell in line_perpendicular_to_axis_z:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_z.index(cell)
+                    selected_cell = cell
+
+            # cell above and cell below the cell with selected king
+            center_line_parallel_to_axis_z = []
+            if selected_cell.position[0] == 0:
+                for cell in board:
+                    if cell.position[1] == selected_cell.position[1]:
+                        center_line_parallel_to_axis_z.append(cell)
+
+                center_line_parallel_to_axis_z = sorted(center_line_parallel_to_axis_z,
+                                                        key=lambda a__cell: a__cell.position[2]
+                                                        if a__cell.position[2] != 0 else a__cell.position[0])
+
+                the_selected_cell_index = center_line_parallel_to_axis_z.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_z[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_z[the_selected_cell_index - 1])
+
+            elif selected_cell.position[1] == 0:
+                for cell in board:
+                    if cell.position[0] == selected_cell.position[0]:
+                        center_line_parallel_to_axis_z.append(cell)
+
+                center_line_parallel_to_axis_z = sorted(center_line_parallel_to_axis_z,
+                                                        key=lambda a__cell: a__cell.position[2]
+                                                        if a__cell.position[2] != 0 else a__cell.position[1])
+
+                the_selected_cell_index = center_line_parallel_to_axis_z.index(selected_cell)
+
+                if the_selected_cell_index + 1 < 8:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_z[the_selected_cell_index + 1])
+                if the_selected_cell_index - 1 >= 0:
+                    move_cells_to_be_checked.append(center_line_parallel_to_axis_z[the_selected_cell_index - 1])
+
+            # 3 nearby cells to the right
+            right_line_parallel_to_axis_z = []
+            if selected_cell_index != 7:
+                right_nearby_cell = line_perpendicular_to_axis_z[selected_cell_index + 1]
+                move_cells_to_be_checked.append(right_nearby_cell)
+                if right_nearby_cell.position[0] == 0:
+                    for cell in board:
+                        if cell.position[1] == right_nearby_cell.position[1]:
+                            right_line_parallel_to_axis_z.append(cell)
+
+                    right_line_parallel_to_axis_z = sorted(right_line_parallel_to_axis_z,
+                                                           key=lambda a__cell: a__cell.position[2]
+                                                           if a__cell.position[2] != 0 else a__cell.position[0])
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_z.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_z[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_z[right_nearby_cell_index - 1])
+
+                elif right_nearby_cell.position[1] == 0:
+                    for cell in board:
+                        if cell.position[0] == right_nearby_cell.position[0]:
+                            right_line_parallel_to_axis_z.append(cell)
+
+                    right_line_parallel_to_axis_z = sorted(right_line_parallel_to_axis_z,
+                                                           key=lambda a__cell: a__cell.position[2]
+                                                           if a__cell.position[2] != 0 else a__cell.position[1])
+
+                    right_nearby_cell_index = right_line_parallel_to_axis_z.index(right_nearby_cell)
+
+                    if right_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_z[right_nearby_cell_index + 1])
+                    if right_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(right_line_parallel_to_axis_z[right_nearby_cell_index - 1])
+
+            # 3 nearby cells to the left
+            left_line_parallel_to_axis_z = []
+            if selected_cell_index != 0:
+                left_nearby_cell = line_perpendicular_to_axis_z[selected_cell_index - 1]
+                move_cells_to_be_checked.append(left_nearby_cell)
+                if left_nearby_cell.position[0] == 0:
+                    for cell in board:
+                        if cell.position[1] == left_nearby_cell.position[1]:
+                            left_line_parallel_to_axis_z.append(cell)
+
+                    left_line_parallel_to_axis_z = sorted(left_line_parallel_to_axis_z,
+                                                          key=lambda a__cell: a__cell.position[2]
+                                                          if a__cell.position[2] != 0 else a__cell.position[0])
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_z.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_z[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_z[left_nearby_cell_index - 1])
+
+                elif left_nearby_cell.position[1] == 0:
+                    for cell in board:
+                        if cell.position[0] == left_nearby_cell.position[0]:
+                            left_line_parallel_to_axis_z.append(cell)
+
+                    left_line_parallel_to_axis_z = sorted(left_line_parallel_to_axis_z,
+                                                          key=lambda a__cell: a__cell.position[2]
+                                                          if a__cell.position[2] != 0 else a__cell.position[1])
+
+                    left_nearby_cell_index = left_line_parallel_to_axis_z.index(left_nearby_cell)
+
+                    if left_nearby_cell_index + 1 < 8:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_z[left_nearby_cell_index + 1])
+                    if left_nearby_cell_index - 1 >= 0:
+                        move_cells_to_be_checked.append(left_line_parallel_to_axis_z[left_nearby_cell_index - 1])
+
+        move_cells_check(move_cells_to_be_checked)
+
+        possible_move_cells_list.extend([key for key in self.castling().keys()])
+
+        # Adding piece's current position cell into the list in order to highlight cells when piece is selected
+        for cell in board:
+            if self.position == cell.position:
+                possible_move_cells_list.append(cell)
+
+        # Return list of cells available for move + current cell
+        return possible_move_cells_list
 
 
 class Knight(Piece):
@@ -1589,56 +2090,56 @@ class Pawn(Piece):
 
 
 # Creation of Piece objects
-white_left_rook = Rook("w_l_Rook", "white", [0, -4, -4], False, w_rook)
-white_left_knight = Knight("w_l_Knight", "white", [0, -4, -3], False, w_knight)
-white_left_bishop = Bishop("w_l_Bishop", "white", [0, -4, -2], False, w_bishop)
-white_queen = Queen("w_Queen", "white", [0, -4, -1], False, w_queen)
-white_king = King("w_King", "white", [1, -4, 0], False, w_king)
-white_right_bishop = Bishop("w_r_Bishop", "white", [2, -4, 0], False, w_bishop)
-white_right_knight = Knight("w_r_Knight", "white", [3, -4, 0], False, w_knight)
-white_right_rook = Rook("w_r_Rook", "white", [4, -4, 0], False, w_rook)
-white_pawn1 = Pawn("w_1_Pawn", "white", [0, -3, -4], False, w_pawn)
-white_pawn2 = Pawn("w_2_Pawn", "white", [0, -3, -3], False, w_pawn)
-white_pawn3 = Pawn("w_3_Pawn", "white", [0, -3, -2], False, w_pawn)
-white_pawn4 = Pawn("w_4_Pawn", "white", [0, -3, -1], False, w_pawn)
-white_pawn5 = Pawn("w_5_Pawn", "white", [1, -3, 0], False, w_pawn)
-white_pawn6 = Pawn("w_6_Pawn", "white", [2, -3, 0], False, w_pawn)
-white_pawn7 = Pawn("w_7_Pawn", "white", [3, -3, 0], False, w_pawn)
-white_pawn8 = Pawn("w_8_Pawn", "white", [4, -3, 0], False, w_pawn)
+white_left_rook = Rook("w_l_Rook", "white", [0, -4, -4], False, True, w_rook)
+white_left_knight = Knight("w_l_Knight", "white", [0, -4, -3], False, True, w_knight)
+white_left_bishop = Bishop("w_l_Bishop", "white", [0, -4, -2], False, True, w_bishop)
+white_queen = Queen("w_Queen", "white", [0, -4, -1], False, True, w_queen)
+white_king = King("w_King", "white", [1, -4, 0], False, True, w_king)
+white_right_bishop = Bishop("w_r_Bishop", "white", [2, -4, 0], False, True, w_bishop)
+white_right_knight = Knight("w_r_Knight", "white", [3, -4, 0], False, True, w_knight)
+white_right_rook = Rook("w_r_Rook", "white", [4, -4, 0], False, True, w_rook)
+white_pawn1 = Pawn("w_1_Pawn", "white", [0, -3, -4], False, True, w_pawn)
+white_pawn2 = Pawn("w_2_Pawn", "white", [0, -3, -3], False, True, w_pawn)
+white_pawn3 = Pawn("w_3_Pawn", "white", [0, -3, -2], False, True, w_pawn)
+white_pawn4 = Pawn("w_4_Pawn", "white", [0, -3, -1], False, True, w_pawn)
+white_pawn5 = Pawn("w_5_Pawn", "white", [1, -3, 0], False, True, w_pawn)
+white_pawn6 = Pawn("w_6_Pawn", "white", [2, -3, 0], False, True, w_pawn)
+white_pawn7 = Pawn("w_7_Pawn", "white", [3, -3, 0], False, True, w_pawn)
+white_pawn8 = Pawn("w_8_Pawn", "white", [4, -3, 0], False, True, w_pawn)
 
-black_left_rook = Rook("b_l_Rook", "black", [-4, 4, 0], False, b_rook)
-black_left_knight = Knight("b_l_Knight", "black", [-4, 3, 0], False, b_knight)
-black_left_bishop = Bishop("b_l_Bishop", "black", [-4, 2, 0], False, b_bishop)
-black_queen = Queen("b_Queen", "black", [-4, 1, 0], False, b_queen)
-black_king = King("b_King", "black", [-4, 0, -1], False, b_king)
-black_right_bishop = Bishop("b_r_Bishop", "black", [-4, 0, -2], False, b_bishop)
-black_right_knight = Knight("b_r_Knight", "black", [-4, 0, -3], False, b_knight)
-black_right_rook = Rook("b_r_Rook", "black", [-4, 0, -4], False, b_rook)
-black_pawn1 = Pawn("b_1_Pawn", "black", [-3, 4, 0], False, b_pawn)
-black_pawn2 = Pawn("b_2_Pawn", "black", [-3, 3, 0], False, b_pawn)
-black_pawn3 = Pawn("b_3_Pawn", "black", [-3, 2, 0], False, b_pawn)
-black_pawn4 = Pawn("b_4_Pawn", "black", [-3, 1, 0], False, b_pawn)
-black_pawn5 = Pawn("b_5_Pawn", "black", [-3, 0, -1], False, b_pawn)
-black_pawn6 = Pawn("b_6_Pawn", "black", [-3, 0, -2], False, b_pawn)
-black_pawn7 = Pawn("b_7_Pawn", "black", [-3, 0, -3], False, b_pawn)
-black_pawn8 = Pawn("b_8_Pawn", "black", [-3, 0, -4], False, b_pawn)
+black_left_rook = Rook("b_l_Rook", "black", [-4, 4, 0], False, True, b_rook)
+black_left_knight = Knight("b_l_Knight", "black", [-4, 3, 0], False, True, b_knight)
+black_left_bishop = Bishop("b_l_Bishop", "black", [-4, 2, 0], False, True, b_bishop)
+black_queen = Queen("b_Queen", "black", [-4, 1, 0], False, True, b_queen)
+black_king = King("b_King", "black", [-4, 0, -1], False, True, b_king)
+black_right_bishop = Bishop("b_r_Bishop", "black", [-4, 0, -2], False, True, b_bishop)
+black_right_knight = Knight("b_r_Knight", "black", [-4, 0, -3], False, True, b_knight)
+black_right_rook = Rook("b_r_Rook", "black", [-4, 0, -4], False, True, b_rook)
+black_pawn1 = Pawn("b_1_Pawn", "black", [-3, 4, 0], False, True, b_pawn)
+black_pawn2 = Pawn("b_2_Pawn", "black", [-3, 3, 0], False, True, b_pawn)
+black_pawn3 = Pawn("b_3_Pawn", "black", [-3, 2, 0], False, True, b_pawn)
+black_pawn4 = Pawn("b_4_Pawn", "black", [-3, 1, 0], False, True, b_pawn)
+black_pawn5 = Pawn("b_5_Pawn", "black", [-3, 0, -1], False, True, b_pawn)
+black_pawn6 = Pawn("b_6_Pawn", "black", [-3, 0, -2], False, True, b_pawn)
+black_pawn7 = Pawn("b_7_Pawn", "black", [-3, 0, -3], False, True, b_pawn)
+black_pawn8 = Pawn("b_8_Pawn", "black", [-3, 0, -4], False, True, b_pawn)
 
-red_left_rook = Rook("r_l_Rook", "red", [4, 0, 4], False, r_rook)
-red_left_knight = Knight("r_l_Knight", "red", [3, 0, 4], False, r_knight)
-red_left_bishop = Bishop("r_l_Bishop", "red", [2, 0, 4], False, r_bishop)
-red_queen = Queen("r_Queen", "red", [1, 0, 4], False, r_queen)
-red_king = King("r_King", "red", [0, 1, 4], False, r_king)
-red_right_bishop = Bishop("r_r_Bishop", "red", [0, 2, 4], False, r_bishop)
-red_right_knight = Knight("r_r_Knight", "red", [0, 3, 4], False, r_knight)
-red_right_rook = Rook("r_r_Rook", "red", [0, 4, 4], False, r_rook)
-red_pawn1 = Pawn("r_1_Pawn", "red", [4, 0, 3], False, r_pawn)
-red_pawn2 = Pawn("r_2_Pawn", "red", [3, 0, 3], False, r_pawn)
-red_pawn3 = Pawn("r_3_Pawn", "red", [2, 0, 3], False, r_pawn)
-red_pawn4 = Pawn("r_4_Pawn", "red", [1, 0, 3], False, r_pawn)
-red_pawn5 = Pawn("r_5_Pawn", "red", [0, 1, 3], False, r_pawn)
-red_pawn6 = Pawn("r_6_Pawn", "red", [0, 2, 3], False, r_pawn)
-red_pawn7 = Pawn("r_7_Pawn", "red", [0, 3, 3], False, r_pawn)
-red_pawn8 = Pawn("r_8_Pawn", "red", [0, 4, 3], False, r_pawn)
+red_left_rook = Rook("r_l_Rook", "red", [4, 0, 4], False, True, r_rook)
+red_left_knight = Knight("r_l_Knight", "red", [3, 0, 4], False, True, r_knight)
+red_left_bishop = Bishop("r_l_Bishop", "red", [2, 0, 4], False, True, r_bishop)
+red_queen = Queen("r_Queen", "red", [1, 0, 4], False, True, r_queen)
+red_king = King("r_King", "red", [0, 1, 4], False, True, r_king)
+red_right_bishop = Bishop("r_r_Bishop", "red", [0, 2, 4], False, True, r_bishop)
+red_right_knight = Knight("r_r_Knight", "red", [0, 3, 4], False, True, r_knight)
+red_right_rook = Rook("r_r_Rook", "red", [0, 4, 4], False, True, r_rook)
+red_pawn1 = Pawn("r_1_Pawn", "red", [4, 0, 3], False, True, r_pawn)
+red_pawn2 = Pawn("r_2_Pawn", "red", [3, 0, 3], False, True, r_pawn)
+red_pawn3 = Pawn("r_3_Pawn", "red", [2, 0, 3], False, True, r_pawn)
+red_pawn4 = Pawn("r_4_Pawn", "red", [1, 0, 3], False, True, r_pawn)
+red_pawn5 = Pawn("r_5_Pawn", "red", [0, 1, 3], False, True, r_pawn)
+red_pawn6 = Pawn("r_6_Pawn", "red", [0, 2, 3], False, True, r_pawn)
+red_pawn7 = Pawn("r_7_Pawn", "red", [0, 3, 3], False, True, r_pawn)
+red_pawn8 = Pawn("r_8_Pawn", "red", [0, 4, 3], False, True, r_pawn)
 
 # Creation of all pieces list (iterable)
 all_pieces_lst = [
