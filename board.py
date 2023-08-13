@@ -284,11 +284,6 @@ class BoardCell:
 
     def cell_draw(self, surface):
         self.rect = pygame.draw.polygon(surface, self.current_color, self.points).scale_by(0.4)
-        # print(type(self.rect))
-        # self.rect = self.rect.scale_by(0.5)
-        # print(type(self.rect))
-
-
 
 board = []
 

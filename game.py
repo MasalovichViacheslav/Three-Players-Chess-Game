@@ -3,7 +3,7 @@ from board import points_dict, board, rect_center_coords, draw_symbol
 from colors import GOLD_LIGHT, BLACK
 from pieces import all_pieces_lst
 
-WIDTH = 1200
+WIDTH = 1400
 HEIGHT = 800
 FPS = 30
 
@@ -11,11 +11,11 @@ FPS = 30
 pygame.init()
 pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Chess Game")
+pygame.display.set_caption("Three Players Chess Game")
 clock = pygame.time.Clock()
 
 # BOARD CONSTANT ELEMENTS DRAWING
-board_background = pygame.Surface((WIDTH * 0.9, HEIGHT * 0.9))
+board_background = pygame.Surface((WIDTH - 400, HEIGHT))
 board_background_rect = board_background.get_rect()
 
 # Board frame drawing
@@ -40,6 +40,8 @@ draw_symbol(letters_digits, 0, GOLD_LIGHT, board_background, center_points_coord
 running = True
 selected_piece_list = []
 cells_for_move = []
+move_queue_list = ["white", "black", "red"]
+
 while running:
     clock.tick(FPS)
     for event in pygame.event.get():
@@ -49,7 +51,8 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             for piece in all_pieces_lst:
                 # selecting a piece
-                if piece.rect.collidepoint(event.pos) and piece.is_selected is False and len(selected_piece_list) == 0:
+                if piece.rect.collidepoint(event.pos) and piece.is_selected is False and len(selected_piece_list) == 0 \
+                        and piece.move_frozen is False:
                     piece.is_selected = True
                     cells_for_move = piece.highlight_cells()
                     selected_piece_list.append(piece)
@@ -92,6 +95,14 @@ while running:
                     selected_piece_list.clear()
                     cells_for_move[-1].occupied = False
                     cells_for_move.clear()
+
+                    # move queue change after piece move is completed
+                    move_queue_list.append(move_queue_list.pop(0))
+                    for piece in all_pieces_lst:
+                        if piece.color == move_queue_list[0]:
+                            piece.move_frozen = False
+                        else:
+                            piece.move_frozen = True
                     break
 
     # UPDATE
@@ -100,8 +111,8 @@ while running:
     screen.fill(BLACK)
     screen.blit(board_background, board_background_rect)
     # Board cells drawing
-    for index in range(len(board)):
-        board[index].cell_draw(board_background)
+    for cell in board:
+        cell.cell_draw(board_background)
     # Pieces drawing
     for piece in all_pieces_lst:
         piece.piece_drawing(board_background)
