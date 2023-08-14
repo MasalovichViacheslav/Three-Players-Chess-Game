@@ -1,8 +1,9 @@
 # Source of piece images - https://opengameart.org/content/colorful-chess-pieces, author - Arsonide
 import pygame
 import os
-from board import board, lines_cross_point, dark_color
+from board import board, lines_cross_point, dark_color, light_color
 from colors import *
+import random
 
 pygame.init()
 # Video mode for image load
@@ -12,6 +13,7 @@ pygame.display.set_mode((1400, 800))
 game_dir = os.path.dirname(__file__)
 # Path to directory with media files
 img_dir = os.path.join(game_dir, "img")
+snd_dir = os.path.join(game_dir, "snd")
 
 # Chess pieces images load
 w_bishop = pygame.image.load(os.path.join(img_dir, "w_bishop.png")).convert()
@@ -79,6 +81,11 @@ class Piece(pygame.sprite.Sprite):
         for cell in board:
             cell.current_color = cell.initial_color
         return []
+
+    # The method records sound of piece move
+    def move_sound(self):
+        pygame.mixer.Sound(os.path.join(snd_dir, random.choice(['Sound1.wav', 'Sound2.wav', 'Sound3.wav']))).play()
+
 
 
 class Bishop(Piece):
@@ -597,14 +604,13 @@ class King(Piece):
         possible_move_cells_list = []
         move_cells_to_be_checked = []
 
-        """
-        The function below receives a list of cells and checks cells in the list on the following:
-        - whether a cell is occupied by another piece or not,
-        - if occupied, whether cell is occupied by own piece or by enemy piece.
-        The list of possible moves is formed based on results of checking 
-        """
-
         def move_cells_check(cells_list: list):
+            """
+            The function receives a list of cells and checks cells in the list on the following:
+            - whether a cell is occupied by another piece or not,
+            - if occupied, whether cell is occupied by own piece or by enemy piece.
+            The list of possible moves is formed based on results of checking
+            """
             for cell in cells_list:
                 if cell.occupied is False and cell not in possible_move_cells_list:
                     possible_move_cells_list.append(cell)
@@ -1729,7 +1735,6 @@ class Pawn(Piece):
             elif self.position[0] >= 0 and self.position[1] >= 0 and 0 < self.position[2] < 4:
                 next_cell_check(x1=1, x2=0, y1=1, y2=0, z1=1, z2=1)
 
-
         # BLACK PAWNS
         elif self.color == "black":
             # possible forward moves of black pawns on start positions (one or two cells forward)
@@ -1770,7 +1775,6 @@ class Pawn(Piece):
             # possible forward moves of black pawns in section a4-h2
             elif self.position[0] >= 0 > self.position[1] > -4 and self.position[2] <= 0:
                 next_cell_check(x1=1, x2=0, y1=1, y2=-1, z1=1, z2=0)
-
 
         # RED PAWNS
         elif self.color == "red":
@@ -2089,6 +2093,241 @@ class Pawn(Piece):
 
         # Return list of cells available for move + current cell
         return possible_move_cells_list
+
+    def en_passant(self, moves_records: dict, current_move_number: int) -> list:
+        """
+        "list_to_be_returned" has the following values:
+        index 0 - a cell to be highlighted as a cell available for move and to be added to "possible_move_cells_list"
+        index 1 - a pawn to be captured through en passant
+        index 2 - a cell where the pawn to be captured through en passant is located currently
+        """
+        list_to_be_returned = []
+
+        # line of cells "a5-l5"
+        line_perpendicular_to_axis_x = []
+        if self.color == "white" and self.position[0] == -1 or self.color == "red" and self.position[0] == -1:
+            for cell in board:
+                if cell.position[0] == self.position[0]:
+                    line_perpendicular_to_axis_x.append(cell)
+
+            # sorting cells in "line_perpendicular_to_axis_x"
+            line_perpendicular_to_axis_x = sorted(line_perpendicular_to_axis_x,
+                                                  key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0
+                                                  else a_cell.position[1])
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_x"
+            for cell in line_perpendicular_to_axis_x:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_x.index(cell)
+                    break
+
+            for piece in all_pieces_lst:
+                if selected_cell_index != 7 and \
+                        piece.position == line_perpendicular_to_axis_x[selected_cell_index + 1].position and \
+                        "Pawn" in piece.name:
+
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[0] == -3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0] + 1,
+                                moves_records[current_move_number][1].position[1],
+                                moves_records[current_move_number][1].position[2]
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_x[selected_cell_index + 1]))
+                                break
+
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[0] == -3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0] + 1,
+                                moves_records[current_move_number - 1][1].position[1],
+                                moves_records[current_move_number - 1][1].position[2]
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_x[selected_cell_index + 1]))
+                                break
+
+                if selected_cell_index != 0 and \
+                        piece.position == line_perpendicular_to_axis_x[selected_cell_index - 1].position and \
+                        "Pawn" in piece.name:
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[0] == -3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0] + 1,
+                                moves_records[current_move_number][1].position[1],
+                                moves_records[current_move_number][1].position[2]
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_x[selected_cell_index + 1]))
+                                break
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[0] == -3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0] + 1,
+                                moves_records[current_move_number - 1][1].position[1],
+                                moves_records[current_move_number - 1][1].position[2]
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_x[selected_cell_index + 1]))
+
+        # line of cells "h9-l9"
+        line_perpendicular_to_axis_z = []
+        if self.color == "white" and self.position[2] == 1 or self.color == "black" and self.position[2] == 1:
+            for cell in board:
+                if cell.position[2] == self.position[2]:
+                    line_perpendicular_to_axis_z.append(cell)
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_z"
+            for cell in line_perpendicular_to_axis_z:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_z.index(cell)
+                    break
+
+            for piece in all_pieces_lst:
+                if selected_cell_index != 7 and \
+                        piece.position == line_perpendicular_to_axis_z[selected_cell_index + 1].position and \
+                        "Pawn" in piece.name:
+
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[2] == 3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0],
+                                moves_records[current_move_number][1].position[1],
+                                moves_records[current_move_number][1].position[2] - 1
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_z[selected_cell_index + 1]))
+                                break
+
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[2] == 3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0],
+                                moves_records[current_move_number - 1][1].position[1],
+                                moves_records[current_move_number - 1][1].position[2] - 1
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_z[selected_cell_index + 1]))
+                                break
+
+                if selected_cell_index != 0 and \
+                        piece.position == line_perpendicular_to_axis_z[selected_cell_index - 1].position and \
+                        "Pawn" in piece.name:
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[2] == 3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0],
+                                moves_records[current_move_number][1].position[1],
+                                moves_records[current_move_number][1].position[2] - 1
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_z[selected_cell_index + 1]))
+                                break
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[2] == 3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0],
+                                moves_records[current_move_number - 1][1].position[1],
+                                moves_records[current_move_number - 1][1].position[2] - 1
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_z[selected_cell_index + 1]))
+
+        # line of cells "a4-h4"
+        line_perpendicular_to_axis_y = []
+        if self.color == "black" and self.position[1] == -1 or self.color == "red" and self.position[1] == -1:
+            for cell in board:
+                if cell.position[1] == self.position[1]:
+                    line_perpendicular_to_axis_y.append(cell)
+
+            # sorting cells in "line_perpendicular_to_axis_y"
+            line_perpendicular_to_axis_y = sorted(line_perpendicular_to_axis_y,
+                                                  key=lambda a_cell: a_cell.position[2] if a_cell.position[2] != 0
+                                                  else a_cell.position[0])
+
+            print([cell.name for cell in line_perpendicular_to_axis_y])
+
+            # finding out the index of cell with selected piece in "line_perpendicular_to_axis_y"
+            for cell in line_perpendicular_to_axis_y:
+                if cell.position == self.position:
+                    selected_cell_index = line_perpendicular_to_axis_y.index(cell)
+                    break
+
+            for piece in all_pieces_lst:
+                if selected_cell_index != 7 and \
+                        piece.position == line_perpendicular_to_axis_y[selected_cell_index + 1].position and \
+                        "Pawn" in piece.name:
+
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[1] == -3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0],
+                                moves_records[current_move_number][1].position[1] + 1,
+                                moves_records[current_move_number][1].position[2]
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_y[selected_cell_index + 1]))
+                                break
+
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[1] == -3:
+
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0],
+                                moves_records[current_move_number - 1][1].position[1] + 1,
+                                moves_records[current_move_number - 1][1].position[2]
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_y[selected_cell_index + 1]))
+                                break
+
+                if selected_cell_index != 0 and \
+                        piece.position == line_perpendicular_to_axis_y[selected_cell_index - 1].position and \
+                        "Pawn" in piece.name:
+                    if len(moves_records) > 0 and piece == moves_records[current_move_number][0] and \
+                            moves_records[current_move_number][1].position[1] == -3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number][1].position[0],
+                                moves_records[current_move_number][1].position[1] + 1,
+                                moves_records[current_move_number][1].position[2]
+                            ]:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_y[selected_cell_index + 1]))
+                                break
+                    elif len(moves_records) > 1 and piece == moves_records[current_move_number - 1][0] and \
+                            moves_records[current_move_number - 1][1].position[1] == -3:
+                        for cell in board:
+                            if cell.position == [
+                                moves_records[current_move_number - 1][1].position[0],
+                                moves_records[current_move_number - 1][1].position[1] + 1,
+                                moves_records[current_move_number - 1][1].position[2]
+                            ] and cell.occupied is False:
+                                list_to_be_returned.extend((cell, piece,
+                                                            line_perpendicular_to_axis_y[selected_cell_index + 1]))
+
+        if len(list_to_be_returned) != 0 and list_to_be_returned[0].initial_color == dark_color:
+            list_to_be_returned[0].current_color = GREEN_DARK
+        elif len(list_to_be_returned) != 0 and list_to_be_returned[0].initial_color == light_color:
+            list_to_be_returned[0].current_color = GREEN_LIGHT
+
+        return list_to_be_returned
 
 
 # Creation of Piece objects

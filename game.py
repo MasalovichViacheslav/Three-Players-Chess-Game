@@ -41,6 +41,8 @@ running = True
 selected_piece_list = []
 cells_for_move = []
 move_queue_list = ["white", "black", "red"]
+moves_dict = {}
+moves_counter = 0
 
 while running:
     clock.tick(FPS)
@@ -55,6 +57,8 @@ while running:
                         and piece.move_frozen is False:
                     piece.is_selected = True
                     cells_for_move = piece.highlight_cells()
+                    if "Pawn" in piece.name and len(piece.en_passant(moves_dict, moves_counter)) != 0:
+                        cells_for_move.insert(-1, piece.en_passant(moves_dict, moves_counter)[0])
                     selected_piece_list.append(piece)
                     break
 
@@ -69,12 +73,42 @@ while running:
             for cell in cells_for_move[:-1]:
                 if cell.rect.collidepoint(event.pos):
 
+                    """
+                    checking whether en passant move is available or not, if yes, the following en passant actions will
+                    be executed:
+                        - delete enemy piece captured through en passant;
+                        - change "occupied status" of the cell occupied by the captured enemy piece.
+                    The rest actions of en passant move are executed in "selected piece simple move" section
+                    """
+                    if "Pawn" in selected_piece_list[0].name and \
+                            len(selected_piece_list[0].en_passant(moves_dict, moves_counter)) != 0:
+                        selected_piece_list[0].en_passant(moves_dict, moves_counter)[2].occupied = False
+                        all_pieces_lst.remove(selected_piece_list[0].en_passant(moves_dict, moves_counter)[1])
+
+                    # adding move record in moves_dict
+                    moves_counter += 1
+                    """
+                    each "key-value" pair in "moves_dict" will include:
+                    key - move sequence number;
+                    value - list that contains:
+                        index 0 - piece (Piece object) that is moved to new position;
+                        index 1 - cell occupied by the piece before move;
+                        index 2 - cell to be occupied by the piece after move.
+                    """
+                    moves_dict[moves_counter] = [selected_piece_list[0], cells_for_move[-1], cell]
+
                     # captured piece delete
                     for piece in all_pieces_lst:
                         if piece.position == cell.position:
                             all_pieces_lst.remove(piece)
 
-                    # checking whether castling move is available or not
+                    """
+                    checking whether casting move is available or not, if yes, the following casting actions will 
+                    be executed:
+                        - change the rook position;
+                        - change "occupied status" of the cells occupied by the rook before and after castling.
+                    The rest actions of casting move are executed in "selected piece simple move" section 
+                    """
                     if selected_piece_list[0].name in ["w_King", "b_King", "r_King"] and \
                             len(selected_piece_list[0].castling()) != 0 and \
                             cell in [key for key in selected_piece_list[0].castling().keys()]:
@@ -86,12 +120,13 @@ while running:
                         rook.position = rook_new_cell.position
                         rook_new_cell.occupied = True
 
-                    # selected piece move
+                    # selected piece simple move
                     selected_piece_list[0].unhighlight_cells()
                     selected_piece_list[0].position = cell.position
                     cell.occupied = True
                     selected_piece_list[0].first_move = False
                     selected_piece_list[0].is_selected = False
+                    selected_piece_list[0].move_sound()
                     selected_piece_list.clear()
                     cells_for_move[-1].occupied = False
                     cells_for_move.clear()
