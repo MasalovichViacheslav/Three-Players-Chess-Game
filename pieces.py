@@ -37,6 +37,15 @@ r_pawn = pygame.image.load(os.path.join(img_dir, "r_pawn.png")).convert()
 r_queen = pygame.image.load(os.path.join(img_dir, "r_queen.png")).convert()
 r_rook = pygame.image.load(os.path.join(img_dir, "r_rook.png")).convert()
 
+g_king = pygame.image.load(os.path.join(img_dir, "g_king.png")).convert()
+
+kings_images = [w_king, b_king, r_king, g_king]
+
+promotion_images = {}
+promotion_images["white"] = [w_queen, w_rook, w_bishop, w_knight]
+promotion_images["black"] = [b_queen, b_rook, b_bishop, b_knight]
+promotion_images["red"] = [r_queen, r_rook, r_bishop, r_knight]
+
 
 # Piece class (sprite) creation
 class Piece(pygame.sprite.Sprite):
@@ -2329,6 +2338,13 @@ class Pawn(Piece):
 
         return list_to_be_returned
 
+    def promotion(self):
+        promotion_available = False
+        if self.color != "white" and self.position[1] == -4 or self.color != "black" and self.position[0] == -4 or \
+            self.color != "red" and self.position[2] == 4:
+            promotion_available = True
+        return promotion_available
+
 
 # Creation of Piece objects
 white_left_rook = Rook("w_l_Rook", "white", [0, -4, -4], False, True, False, w_rook)
@@ -2395,8 +2411,3 @@ all_pieces_lst = [
     red_left_rook, red_left_knight, red_left_bishop, red_queen, red_king, red_right_bishop, red_right_knight,
     red_right_rook, red_pawn1, red_pawn2, red_pawn3, red_pawn4, red_pawn5, red_pawn6, red_pawn7, red_pawn8
 ]
-
-# Creation of sprites group (not iterable) that contains piece sprites
-all_pieces = pygame.sprite.Group
-for piece in all_pieces_lst:
-    all_pieces.add(piece)
